@@ -63,7 +63,7 @@ def fetch_tracks(lang_mode, count=5):
         if len(tracks) >= count:
             break
             
-        # ÇİFTE GÜVENLİK 1: strict=on ile Deezer'ı zorluyoruz
+        # Deezer API'den sanatçı adına göre arama yapıyoruz
         url = f'https://api.deezer.com/search?q=artist:"{artist}"&strict=on'
         try:
             response = requests.get(url, timeout=3)
@@ -71,8 +71,13 @@ def fetch_tracks(lang_mode, count=5):
             if 'data' in data:
                 valid_songs = []
                 for t in data['data']:
-                    # ÇİFTE GÜVENLİK 2: Gelen şarkının sanatçısı ile aradığımız sanatçı eşleşiyor mu? (Sibel Can engeli)
-                    if t.get('preview') and artist.lower() in t['artist']['name'].lower():
+                    deezer_artist_name = t['artist']['name'].lower()
+                    searched_artist = artist.lower()
+                    
+                    # KESİN FİLTRE: Sanatçı adı birebir eşleşmeli veya aranan kelimeyi tam içermeli
+                    is_exact_match = (searched_artist in deezer_artist_name or deezer_artist_name in searched_artist)
+                    
+                    if t.get('preview') and is_exact_match:
                         valid_songs.append(t)
 
                 if valid_songs:
