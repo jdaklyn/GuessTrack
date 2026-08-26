@@ -1,5 +1,6 @@
 Flask
 Flask-SocketIO
 eventlet
+greenlet
 requests
 gunicorn
