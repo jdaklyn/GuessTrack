@@ -8,12 +8,11 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'guesstrack_super_secret_key'
-# Render bulut uyumluluğu için özel async_mode zorunluluğu kaldırıldı
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 DB_NAME = 'scores.db'
 
-# Senin güncellediğin efsane sanatçı listeleri
+# Güncel Sanatçı Listeleri
 TR_HITS = [
     "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman",
     "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat",
@@ -29,7 +28,6 @@ EN_HITS = [
     "AC/DC", "Eminem", "Kanye West", "Katy Perry", "Selena Gomez"
 ]
 
-# Aktif Multiplayer Odaları
 active_rooms = {}
 
 def init_db():
@@ -64,23 +62,34 @@ def fetch_tracks(lang_mode, count=5):
     for artist in selected_artists:
         if len(tracks) >= count:
             break
-        url = f"https://api.deezer.com/search?q={artist}"
+            
+        # ÇİFTE GÜVENLİK 1: strict=on ile Deezer'ı zorluyoruz
+        url = f'https://api.deezer.com/search?q=artist:"{artist}"&strict=on'
         try:
             response = requests.get(url, timeout=3)
             data = response.json()
             if 'data' in data:
-                valid_songs = [t for t in data['data'] if t.get('preview')]
+                valid_songs = []
+                for t in data['data']:
+                    # ÇİFTE GÜVENLİK 2: Gelen şarkının sanatçısı ile aradığımız sanatçı eşleşiyor mu? (Sibel Can engeli)
+                    if t.get('preview') and artist.lower() in t['artist']['name'].lower():
+                        valid_songs.append(t)
+
                 if valid_songs:
                     track = random.choice(valid_songs)
+                    
+                    # İSİM TEMİZLİĞİ: Radio Edit, Remastered, feat. vs çöpe gidiyor
+                    raw_title = track.get('title_short', track['title'])
+                    clean_title = raw_title.split(' - ')[0].split(' (')[0].split(' [')[0].split(' feat')[0].split(' ft')[0].strip()
+                    
                     tracks.append({
-                        'title': track['title'],
+                        'title': clean_title,
                         'artist': track['artist']['name'],
                         'file': track['preview']
                     })
         except Exception as e:
             print(f"API Hatası ({artist}):", e)
 
-    # Şarkı sayısı eksik kalırsa rastgele çoğalt
     while len(tracks) < count and tracks:
         tracks.append(random.choice(tracks))
         
@@ -111,7 +120,6 @@ def save_score():
     conn.close()
     return jsonify({'status': 'success'})
 
-# --- SOCKET.IO MULTIPLAYER KONTROL MERKEZİ ---
 
 @socketio.on('create_room')
 def handle_create_room(data):
@@ -176,7 +184,6 @@ def handle_track_loaded(data):
     if room_code in active_rooms:
         room = active_rooms[room_code]
         room['loaded_count'] += 1
-        # Odadaki tüm oyuncular (2 kişi) şarkıyı yükleyip hazır olduğunda senkronize başlat
         if room['loaded_count'] >= len(room['players']):
             room['loaded_count'] = 0
             emit('all_players_ready', room=room_code)
@@ -240,7 +247,7 @@ def handle_host_next(data):
 
         if room['current_track'] >= len(room['playlist']):
             emit('game_over_sync', {'players': room['players']}, room=room_code)
-            del active_rooms[room_code] # Oda işi bitti, temizle
+            del active_rooms[room_code]
         else:
             emit('next_round_sync', {'track_index': room['current_track']}, room=room_code)
 
