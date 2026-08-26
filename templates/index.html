@@ -1019,6 +1019,7 @@
             }
         }
 
+        // 1. DÜZELTME: Senkronizasyon (Pro Mod) - Sadece canplaythrough dinlenir!
         function preloadTrackAndStart(trackUrl, callback) {
             resetAudioState();
             
@@ -1036,8 +1037,6 @@
                 if (!isLoaded) {
                     isLoaded = true;
                     audio.removeEventListener('canplaythrough', proceed);
-                    audio.removeEventListener('loadeddata', proceed);
-                    
                     if (preloadTimeout) {
                         clearTimeout(preloadTimeout);
                         preloadTimeout = null;
@@ -1046,9 +1045,12 @@
                 }
             };
 
+            // ÖNEMLİ: Sadece şarkının kesintisiz çalınabileceği 'canplaythrough' anını bekliyoruz. 
+            // Eski 'loadeddata' (ilk saniye yüklendi) kodu kaldırıldı çünkü erken başlamaya sebep oluyordu!
             audio.addEventListener('canplaythrough', proceed);
-            audio.addEventListener('loadeddata', proceed);
-            preloadTimeout = setTimeout(proceed, 4000); 
+            
+            // Eğer 5 saniye içinde yüklenmezse (çok yavaş internet), mecburen zorla devam et (oyun kilitlenmesin diye)
+            preloadTimeout = setTimeout(proceed, 5000); 
             audio.load();
         }
 
@@ -1570,7 +1572,7 @@
             const msg = document.getElementById("screenMsg");
             if (msg) {
                 msg.style.color = "#d8cbb5";
-                msg.innerText = "⏭ PASSED! (0 PTS)";
+                msg.innerText = "⏭️ PASSED! (0 PTS)";
             }
             revealTitle();
             setTimeout(nextSongSolo, 1500);
@@ -1674,6 +1676,7 @@
             startSoloDirect();
         }
 
+        // 2. DÜZELTME: Solo Mod Puan Ekranı - Artık sadece kendi puanın çıkıyor!
         async function finishGameAndShowLeaderboard() {
             stopGuessTimer();
             stopAudioOnly();
@@ -1711,6 +1714,7 @@
                 }).join('');
 
             } else {
+                // SOLO MOD EKRANI 
                 playSuccessSound();
                 try {
                     await fetch('/api/save-score', {
@@ -1720,20 +1724,13 @@
                     });
                 } catch (e) {}
 
-                try {
-                    const response = await fetch('/api/top-scores');
-                    const topScores = await response.json();
-                    rowsHtml = topScores.map((item, i) => `
-                        <div class="leaderboard-row ${i === 0 ? 'winner-row' : ''}">
-                            <span>#${i + 1} ${item.player_name} ${i === 0 ? '🏆' : ''}</span>
-                            <span style="color: #f3c969;">${item.score} PTS</span>
-                        </div>
-                    `).join('');
-                } catch (e) {
-                    rowsHtml = `<div class="leaderboard-row winner-row"><span>#1 ${playerTag} 🏆</span><span style="color: #f3c969;">${score} PTS</span></div>`;
-                }
-
-                headerTitleHtml = `<h2 style="font-size: 26px; color: #f3c969; margin-bottom: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">🏆 SOLO LEADERBOARD</h2>`;
+                // Herkesi görmek yerine sadece senin puanını büyük bir şekilde gösteriyoruz!
+                headerTitleHtml = `<h2 style="font-size: 26px; color: #f3c969; margin-bottom: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">🏁 STAGE CLEAR!</h2>`;
+                rowsHtml = `
+                    <div class="leaderboard-row winner-row" style="justify-content: center; padding: 15px;">
+                        <span style="font-size: 22px;">🎯 SENİN PUANIN: <span style="color: #f3c969; font-weight: bold;">${score} PTS</span></span>
+                    </div>
+                `;
             }
 
             document.getElementById("mainScreen").innerHTML = `
