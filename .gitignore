@@ -1,0 +1,19 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+env/
+ENV/
+.env
+
+# Local Database
+scores.db
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

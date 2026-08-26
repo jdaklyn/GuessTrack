@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1b241e">
+
+    <title>GuessTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'VT323', monospace;
+            image-rendering: pixelated;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        body {
+            background-color: #121814;
+            background-image: 
+                radial-gradient(#1e2920 15%, transparent 16%), 
+                radial-gradient(#1e2920 15%, transparent 16%);
+            background-size: 16px 16px;
+            background-position: 0 0, 8px 8px;
+            color: #d8cbb5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+        }
+
+        .pixel-device {
+            background: #3e2d20;
+            border: 4px solid #140d09;
+            box-shadow: 
+                inset 3px 3px 0px #61442e,
+                inset -3px -3px 0px #24170e,
+                0px 8px 0px #0a0604,
+                0px 16px 24px rgba(0,0,0,0.7);
+            border-radius: 18px;
+            padding: 16px;
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 660px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 20px;
+            color: #dca153;
+            letter-spacing: 1.5px;
+            text-shadow: 1px 1px #0a0604;
+            padding-bottom: 4px;
+        }
+
+        .pixel-screen {
+            background-color: #142017;
+            border: 4px solid #0d1610;
+            box-shadow: 
+                inset 3px 3px 0px #080f0a, 
+                inset -3px -3px 0px #243829,
+                0 0 15px rgba(88, 129, 87, 0.15);
+            border-radius: 10px;
+            padding: 12px;
+            color: #a3c9a8;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            flex: 1;
+            margin: 6px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pixel-screen::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .screen-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            color: #84b38a;
+            text-shadow: 0 0 4px rgba(132, 179, 138, 0.4);
+            z-index: 6;
+        }
+
+        .stage-bars {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            z-index: 6;
+        }
+
+        .stage-bar {
+            height: 12px;
+            background: #0d1610;
+            border: 1px solid #1f3324;
+            border-radius: 2px;
+            opacity: 0.4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #7ca982;
+        }
+
+        .stage-bar.active {
+            opacity: 1;
+            background: #588157;
+            box-shadow: 0 0 8px rgba(88, 129, 87, 0.8);
+            color: #fff;
+        }
+
+        .stage-bar.used {
+            opacity: 1;
+            background: #a44a3f;
+            border-color: #67221b;
+            color: #ffd8d3;
+        }
+
+        .timer-track {
+            width: 100%;
+            height: 12px;
+            background: #0a0604;
+            border: 2px solid #283d31;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            z-index: 6;
+        }
+
+        .timer-fill {
+            width: 100%;
+            height: 100%;
+            background: #588157;
+            box-shadow: 0 0 6px rgba(88, 129, 87, 0.8);
+            transition: width 0.05s linear, background-color 0.3s ease;
+        }
+
+        .title-display {
+            background: #0d1610;
+            border: 2px dashed #283d31;
+            border-radius: 6px;
+            padding: 8px 6px;
+            text-align: center;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 6;
+        }
+
+        .song-title {
+            font-size: 21px;
+            letter-spacing: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .song-title.mystery-title {
+            color: #588157;
+            text-shadow: 0 0 6px rgba(88, 129, 87, 0.6);
+            letter-spacing: 3px;
+        }
+
+        .song-title.revealed-title {
+            color: #f3c969;
+            text-shadow: 0 0 10px rgba(243, 201, 105, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 3px;
+            height: 22px;
+            z-index: 6;
+        }
+
+        .wave-bar {
+            width: 5px;
+            height: 3px;
+            background: #344e41;
+            border-radius: 1px;
+            transition: height 0.08s ease;
+        }
+
+        .playing .wave-bar {
+            background: #588157;
+            box-shadow: 0 0 5px rgba(88, 129, 87, 0.7);
+        }
+
+        .playing .wave-bar:nth-child(odd) { animation: wave 0.35s infinite alternate ease-in-out; }
+        .playing .wave-bar:nth-child(even) { animation: wave 0.45s infinite alternate-reverse ease-in-out; }
+        .playing .wave-bar:nth-child(3n) { animation: wave 0.25s infinite alternate ease-in-out; }
+        .playing .wave-bar:nth-child(4n) { animation: wave 0.5s infinite alternate-reverse ease-in-out; }
+
+        @keyframes wave {
+            0% { height: 3px; }
+            100% { height: 20px; }
+        }
+
+        .screen-msg {
+            font-size: 18px;
+            text-align: center;
+            color: #d8cbb5;
+            min-height: 20px;
+            text-shadow: 0 0 4px rgba(216, 203, 181, 0.3);
+            z-index: 6;
+            transition: color 0.2s ease;
+        }
+
+        .overlay-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(18, 28, 21, 0.99);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .countdown-overlay {
+            z-index: 20 !important;
+            background: #142017 !important;
+        }
+
+        .arcade-blink {
+            animation: blink 0.9s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0.2; }
+        }
+
+        .countdown-num {
+            font-size: 72px;
+            color: #f3c969;
+            text-shadow: 0 0 14px rgba(243, 201, 105, 0.9);
+            animation: pulse 0.7s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.85); }
+            100% { transform: scale(1.15); }
+        }
+
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pixel-input {
+            width: 100%;
+            background: #140d09;
+            border: 3px solid #4a3424;
+            border-radius: 6px;
+            box-shadow: inset 3px 3px 0px #080503;
+            color: #f3c969;
+            padding: 10px 12px;
+            font-size: 20px;
+            outline: none;
+            text-transform: uppercase;
+            -webkit-user-select: auto;
+            user-select: auto;
+            transition: border-color 0.2s;
+        }
+
+        .pixel-input.input-error {
+            border-color: #a44a3f !important;
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .pixel-input::placeholder {
+            color: #554436;
+            font-size: 18px;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: 0.9fr 1.1fr 1fr 1.1fr;
+            gap: 6px;
+        }
+
+        .p-btn {
+            border: 2px solid #140d09;
+            box-shadow: 
+                inset 2px 2px 0px rgba(255,255,255,0.25),
+                inset -2px -2px 0px rgba(0,0,0,0.5),
+                0px 4px 0px #0a0604;
+            padding: 12px 2px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 6px;
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+
+        .p-btn:active {
+            transform: translateY(3px);
+            box-shadow: 
+                inset 2px 2px 0px rgba(0,0,0,0.5),
+                inset -2px -2px 0px rgba(255,255,255,0.2),
+                0px 1px 0px #0a0604;
+        }
+
+        .btn-pass { background: #3d4a54; color: #d8cbb5; }
+        .btn-pass.voted-pass { background: #c2591b !important; color: #fff !important; box-shadow: 0 0 10px rgba(194, 89, 27, 0.7); }
+        .btn-time { background: #b58028; color: #140d09; }
+        .btn-hint { background: #5a7d7c; color: #fff; }
+        .btn-guess { background: #476d46; color: #fff; }
+        .btn-start { background: #c2591b; color: #fff; font-size: 20px; padding: 10px; width: 100%; }
+
+        .lang-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .lang-btn {
+            background: #0d1610;
+            border: 2px solid #283d31;
+            color: #a3c9a8;
+            padding: 8px 4px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 6px;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+
+        .lang-btn.selected {
+            background: #476d46;
+            color: #fff;
+            border-color: #f3c969;
+            box-shadow: 0 0 10px rgba(243, 201, 105, 0.4);
+            transform: scale(1.03);
+        }
+
+        .mode-btn {
+            background: #1c2b20;
+            border: 2px solid #3e5a44;
+            color: #f3c969;
+            font-size: 19px;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 85%;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .leaderboard-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            padding: 6px 10px;
+            background: rgba(0,0,0,0.35);
+            border-radius: 4px;
+            border-left: 4px solid #588157;
+        }
+
+        .leaderboard-row.winner-row {
+            border-left-color: #f3c969;
+            background: rgba(243, 201, 105, 0.15);
+        }
+
+        .room-code-badge-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .room-code-badge {
+            font-size: 32px;
+            color: #f3c969;
+            background: #0d1610;
+            border: 2px dashed #476d46;
+            padding: 6px 16px;
+            border-radius: 6px;
+            letter-spacing: 4px;
+        }
+
+        .btn-copy-code {
+            background: #283d31;
+            border: 2px solid #476d46;
+            color: #a3c9a8;
+            padding: 8px 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy-code.copied {
+            background: #476d46;
+            color: #fff;
+            border-color: #f3c969;
+        }
+
+        .client-wait-box {
+            font-size: 18px;
+            color: #f3c969;
+            border: 2px dashed #b58028;
+            background: #140d09;
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 90%;
+            text-shadow: 0 0 5px rgba(243, 201, 105, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="pixel-device">
+        <div class="device-header">
+            <span id="playerTagLabel">GUEST</span>
+            <span id="statsLabel">TRACK: 1/5</span>
+        </div>
+
+        <div class="pixel-screen" id="mainScreen">
+            
+            <div id="screenNameStep" class="overlay-screen">
+                <h2 style="font-size: 28px; color: #f3c969; letter-spacing: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);" class="arcade-blink">GUESSTRACK</h2>
+                <span style="font-size: 19px; color: #a3c9a8;">ENTER YOUR NICKNAME:</span>
+                <input type="text" class="pixel-input" id="initialTagInput" placeholder="NICKNAME..." maxlength="10" style="text-align: center; width: 85%;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="this.classList.remove('input-error')" onkeydown="if(event.key==='Enter') goToModeStep()">
+                <button class="p-btn btn-start" style="width: 85%;" onclick="goToModeStep()">NEXT ➔</button>
+            </div>
+
+            <div id="screenModeStep" class="overlay-screen" style="display: none;">
+                <span style="font-size: 20px; color: #f3c969;">SELECT GAME MODE</span>
+                <button class="p-btn mode-btn" onclick="selectMode('SOLO')">🎮 SOLO PLAY</button>
+                <button class="p-btn mode-btn" onclick="selectMode('MULTI')">⚔️ 1V1 DUEL (ROOM)</button>
+                <button class="p-btn btn-pass" style="width: 85%; font-size: 16px; padding: 6px;" onclick="backToNameStep()">⬅ BACK</button>
+            </div>
+
+            <div id="screenLangStep" class="overlay-screen" style="display: none;">
+                <span style="font-size: 19px; color: #f3c969;">SELECT TRACK LANGUAGE:</span>
+                <div class="lang-selector" style="width: 90%;">
+                    <button class="lang-btn selected" id="btnLangTR" onclick="setLanguage('TR')">TR</button>
+                    <button class="lang-btn" id="btnLangEN" onclick="setLanguage('EN')">ENG</button>
+                    <button class="lang-btn" id="btnLangBOTH" onclick="setLanguage('BOTH')">MIX</button>
+                </div>
+                <div style="display: flex; gap: 8px; width: 90%; margin-top: 6px;">
+                    <button class="p-btn btn-pass" style="width: 35%; font-size: 16px;" onclick="backToModeStep()">⬅ BACK</button>
+                    <button class="p-btn btn-start" id="startActionBtn" style="width: 65%; font-size: 20px;" onclick="initiateSoloGame()">▶ START</button>
+                </div>
+            </div>
+
+            <div id="screenMultiStep" class="overlay-screen" style="display: none;">
+                <span style="font-size: 20px; color: #f3c969;">MULTIPLAYER LOBBY</span>
+                
+                <span style="font-size: 16px; color: #a3c9a8; margin-top: 2px;">ROOM TRACK LANGUAGE:</span>
+                <div class="lang-selector" style="width: 85%;">
+                    <button class="lang-btn selected" id="btnMultiLangTR" onclick="setMultiLanguage('TR')">TR</button>
+                    <button class="lang-btn" id="btnMultiLangEN" onclick="setMultiLanguage('EN')">ENG</button>
+                    <button class="lang-btn" id="btnMultiLangBOTH" onclick="setMultiLanguage('BOTH')">MIX</button>
+                </div>
+
+                <button class="p-btn btn-start" id="btnCreateRoomAction" style="width: 85%; margin-top: 4px;" onclick="openCreateRoomView()">👑 CREATE ROOM</button>
+                
+                <div style="display: flex; gap: 6px; width: 85%; margin-top: 4px;">
+                    <input type="text" class="pixel-input" id="roomCodeInput" placeholder="ROOM CODE..." maxlength="4" style="text-align: center; width: 60%; font-size: 16px; padding: 6px;" autocomplete="off">
+                    <button class="p-btn btn-guess" style="width: 40%; font-size: 16px;" onclick="joinRoomAction()">JOIN</button>
+                </div>
+                
+                <div id="lobbyErrorText" style="color: #e76f51; font-size: 16px; min-height: 18px; margin-top: 4px; text-shadow: 0 0 5px rgba(231,111,81,0.5);"></div>
+
+                <button class="p-btn btn-pass" style="width: 85%; font-size: 16px; padding: 6px; margin-top: 4px;" onclick="backToModeStep()">⬅ BACK</button>
+            </div>
+
+            <div id="screenRoomLobby" class="overlay-screen" style="display: none;">
+                <div style="font-size: 16px; color: #a3c9a8;">ROOM CODE (<span id="lobbyLangBadge" style="color: #f3c969;">TR</span>):</div>
+                <div class="room-code-badge-wrap">
+                    <div class="room-code-badge" id="lobbyRoomCode">----</div>
+                    <button class="btn-copy-code" id="btnCopyCode" onclick="copyRoomCode()">📋 COPY</button>
+                </div>
+                <div id="lobbyPlayersList" style="font-size: 18px; color: #f3c969; margin: 4px 0;">WAITING OPPONENT...</div>
+                
+                <button class="p-btn btn-start" id="btnHostStart" style="width: 85%; display: none;" onclick="hostStartGame()">▶ START DUEL</button>
+                
+                <div id="clientWaitingNotice" class="client-wait-box arcade-blink" style="display: none;">
+                    ⏳ WAITING FOR HOST TO START...
+                </div>
+            </div>
+
+            <div id="screenCountdown" class="overlay-screen countdown-overlay" style="display: none;">
+                <span class="countdown-num" id="countdownNum" style="text-align: center;">3</span>
+            </div>
+
+            <div class="screen-top">
+                <span id="listenLabel">AUDIO: 1.5s (+15P)</span>
+                <span id="guessTimerLabel">GUESS: 20s</span>
+                <span id="scoreLabel">SCORE: 0</span>
+            </div>
+
+            <div class="stage-bars">
+                <div class="stage-bar active" id="bar0">1.5s (+15P)</div>
+                <div class="stage-bar" id="bar1">+4.0s (+10P)</div>
+                <div class="stage-bar" id="bar2">+8.0s (+5P)</div>
+            </div>
+
+            <div class="timer-track">
+                <div class="timer-fill" id="timerFill"></div>
+            </div>
+
+            <div class="title-display">
+                <span id="songDisplay" class="song-title mystery-title">_ _ _ _</span>
+            </div>
+
+            <div class="visualizer" id="visualizer">
+                <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            </div>
+
+            <div class="screen-msg" id="screenMsg">READY?</div>
+        </div>
+
+        <div class="controls-wrapper" id="controlsArea">
+            <input type="text" class="pixel-input" id="guessInput" placeholder="GUESS TRACK..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter') submitGuess()">
+            
+            <div class="keypad">
+                <button class="p-btn btn-pass" id="passBtn" onclick="passSong()">⏭ PASS</button>
+                <button class="p-btn btn-time" id="timeBtn" onclick="getTimeExtension()">⏱ +TIME (+4s)</button>
+                <button class="p-btn btn-hint" id="hintBtn" onclick="getLetterHint()">💡 HINT (5)</button>
+                <button class="p-btn btn-guess" onclick="submitGuess()">✔ GUESS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        let playlist = [];
+        const addedDurations = [1.5, 4.0, 8.0];
+        const stagePoints = [15, 10, 5]; 
+        const TOTAL_GUESS_TIME = 20.0;
+
+        let currentStep = 0;       
+        let currentSongIndex = 0;
+        let score = 0;
+        let isLocked = false;
+        let playerTag = "";
+        let selectedLang = "TR";
+        let multiSelectedLang = "TR";
+        let gameMode = "SOLO"; 
+        let currentRoomCode = "";
+        let isHost = false;
+        let hasVotedPass = false;
+        let latestPlayersState = [];
+
+        let remainingHints = 5;
+        let revealedLetters = [];
+
+        let guessTimer = null;
+        let audioPlayInterval = null;
+        let preloadTimeout = null;
+        let timeLeft = 20.0;
+        let timerStartedForThisTrack = false;
+
+        let audio = new Audio();
+        audio.preload = "auto";
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Global Ses Kilidi Açıcı
+        window.addEventListener('pointerdown', () => {
+            getAudioContext();
+        }, { once: true });
+
+        function playClickSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(140, now + 0.05);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } catch (e) {}
+        }
+
+        function playConfirmSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(880, now + 0.06);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.18);
+            } catch (e) {}
+        }
+
+        function playButtonPressSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.04);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.04);
+            } catch (e) {}
+        }
+
+        function playBeepSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, now);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } catch (e) {}
+        }
+
+        function playGoSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(587.33, now);
+                osc.frequency.setValueAtTime(880.00, now + 0.08);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } catch (e) {}
+        }
+
+        function playSuccessSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc1.type = 'square';
+                osc2.type = 'triangle';
+                osc1.frequency.setValueAtTime(523.25, now);       
+                osc1.frequency.setValueAtTime(659.25, now + 0.08); 
+                osc1.frequency.setValueAtTime(783.99, now + 0.16); 
+                osc1.frequency.setValueAtTime(1046.50, now + 0.24);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.45);
+            } catch (e) {}
+        }
+
+        function playOpponentScoredSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(330, now);
+                osc.frequency.exponentialRampToValueAtTime(160, now + 0.35);
+                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } catch (e) {}
+        }
+
+        function playWrongSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.setValueAtTime(110, now + 0.1);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } catch (e) {}
+        }
+
+        function playPassSound() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.25);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } catch (e) {}
+        }
+
+        function triggerHaptic(pattern) {
+            if ("vibrate" in navigator) navigator.vibrate(pattern);
+        }
+
+        function goToModeStep() {
+            const ctx = getAudioContext();
+            const input = document.getElementById("initialTagInput");
+            const enteredName = input ? input.value.trim() : "";
+
+            if (ctx && ctx.state === 'suspended') {
+                ctx.resume().then(() => {
+                    handleNameSubmit(enteredName, input);
+                });
+            } else {
+                handleNameSubmit(enteredName, input);
+            }
+        }
+
+        function handleNameSubmit(enteredName, input) {
+            if (!enteredName) {
+                playWrongSound();
+                triggerHaptic(100);
+                if (input) {
+                    input.classList.add("input-error");
+                    input.focus();
+                }
+                return;
+            }
+
+            audio.play().then(() => audio.pause()).catch(() => {});
+
+            playerTag = enteredName.toUpperCase();
+            document.getElementById("playerTagLabel").innerText = playerTag;
+            
+            playConfirmSound();
+            triggerHaptic(30);
+
+            document.getElementById("screenNameStep").style.display = "none";
+            document.getElementById("screenModeStep").style.display = "flex";
+        }
+
+        function backToNameStep() {
+            playClickSound();
+            document.getElementById("screenModeStep").style.display = "none";
+            document.getElementById("screenNameStep").style.display = "flex";
+        }
+
+        function selectMode(mode) {
+            gameMode = mode;
+            playClickSound();
+            document.getElementById("screenModeStep").style.display = "none";
+
+            if (mode === "SOLO") {
+                document.getElementById("screenLangStep").style.display = "flex";
+            } else {
+                document.getElementById("screenMultiStep").style.display = "flex";
+            }
+        }
+
+        function backToModeStep() {
+            playClickSound();
+            document.getElementById("screenLangStep").style.display = "none";
+            document.getElementById("screenMultiStep").style.display = "none";
+            document.getElementById("screenModeStep").style.display = "flex";
+        }
+
+        function setLanguage(lang) {
+            selectedLang = lang;
+            playClickSound();
+            document.querySelectorAll('#screenLangStep .lang-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById(`btnLang${lang}`).classList.add('selected');
+        }
+
+        function setMultiLanguage(lang) {
+            multiSelectedLang = lang;
+            playClickSound();
+            document.querySelectorAll('#screenMultiStep .lang-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById(`btnMultiLang${lang}`).classList.add('selected');
+        }
+
+        function copyRoomCode() {
+            if (!currentRoomCode) return;
+            navigator.clipboard.writeText(currentRoomCode).then(() => {
+                playConfirmSound();
+                triggerHaptic(40);
+                const copyBtn = document.getElementById("btnCopyCode");
+                if (copyBtn) {
+                    copyBtn.innerText = "✔ COPIED!";
+                    copyBtn.classList.add("copied");
+                    setTimeout(() => {
+                        copyBtn.innerText = "📋 COPY";
+                        copyBtn.classList.remove("copied");
+                    }, 2000);
+                }
+            }).catch(err => {});
+        }
+
+        function cleanText(text) {
+            if (!text) return "";
+            let s = text.toString().trim().toLowerCase();
+            s = s.replace(/[\(\[\{].*?[\)\]\}]/g, '');
+            s = s.split('-')[0].split('feat')[0].split('ft.')[0].trim();
+            return s.replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+                    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                    .replace(/[^a-z0-9]/g, '');
+        }
+
+        function renderMysteryMask() {
+            if (!playlist[currentSongIndex]) return;
+            const songNameOnly = playlist[currentSongIndex].title.toUpperCase();
+            let masked = "";
+            const letterRegex = /[A-Z0-9ÇĞİÖŞÜ]/i;
+
+            for (let i = 0; i < songNameOnly.length; i++) {
+                const char = songNameOnly[i];
+                if (char === ' ') {
+                    masked += "  ";
+                } else if (revealedLetters.includes(i) || !letterRegex.test(char)) {
+                    masked += char + " ";
+                } else {
+                    masked += "_ ";
+                }
+            }
+
+            const display = document.getElementById("songDisplay");
+            if (display) {
+                display.innerText = masked.trim();
+                display.className = "song-title mystery-title";
+            }
+        }
+
+        function calculateCurrentPoints() {
+            return stagePoints[currentStep] || 5;
+        }
+
+        function updateUI() {
+            const potentialPts = calculateCurrentPoints();
+
+            document.getElementById("playerTagLabel").innerText = playerTag || "PLAYER";
+            document.getElementById("statsLabel").innerText = `TRACK: ${currentSongIndex + 1}/${playlist.length || 5}`;
+            
+            let currentListenLabel = "AUDIO: 1.5s";
+            if (currentStep === 1) currentListenLabel = "AUDIO: +4.0s";
+            if (currentStep === 2) currentListenLabel = "AUDIO: +8.0s";
+            document.getElementById("listenLabel").innerText = `${currentListenLabel} (+${potentialPts}P)`;
+            
+            document.getElementById("scoreLabel").innerText = `SCORE: ${score}`;
+
+            for (let i = 0; i < 3; i++) {
+                const bar = document.getElementById(`bar${i}`);
+                if (bar) {
+                    bar.className = "stage-bar";
+                    if (i < currentStep) bar.classList.add("used");
+                    else if (i === currentStep) bar.classList.add("active");
+                }
+            }
+
+            const timeBtn = document.getElementById("timeBtn");
+            if (timeBtn) {
+                if (currentStep >= 2) {
+                    timeBtn.innerText = "⏱ MAX (5P)";
+                    timeBtn.style.opacity = "0.5";
+                } else if (currentStep === 0) {
+                    timeBtn.innerText = `⏱ +TIME (+4s / 10P)`;
+                    timeBtn.style.opacity = "1";
+                } else if (currentStep === 1) {
+                    timeBtn.innerText = `⏱ +TIME (+8s / 5P)`;
+                    timeBtn.style.opacity = "1";
+                }
+            }
+
+            const hintBtn = document.getElementById("hintBtn");
+            if (hintBtn) {
+                hintBtn.innerText = `💡 HINT (${remainingHints})`;
+                hintBtn.style.opacity = remainingHints > 0 ? "1" : "0.5";
+            }
+
+            const passBtn = document.getElementById("passBtn");
+            if (passBtn) {
+                if (gameMode === "MULTI") {
+                    if (!hasVotedPass) {
+                        passBtn.className = "p-btn btn-pass";
+                        passBtn.innerText = "⏭ PASS";
+                    }
+                } else {
+                    passBtn.className = "p-btn btn-pass";
+                    passBtn.innerText = "⏭ PASS";
+                }
+            }
+        }
+
+        function resetAudioState() {
+            if (audioPlayInterval) {
+                clearInterval(audioPlayInterval);
+                audioPlayInterval = null;
+            }
+            try {
+                audio.pause();
+                audio.removeAttribute('src');
+            } catch (e) {}
+
+            const visualizer = document.getElementById("visualizer");
+            if (visualizer) visualizer.classList.remove("playing");
+        }
+
+        function stopAudioOnly() {
+            if (audioPlayInterval) {
+                clearInterval(audioPlayInterval);
+                audioPlayInterval = null;
+            }
+            audio.pause();
+            const visualizer = document.getElementById("visualizer");
+            if (visualizer) visualizer.classList.remove("playing");
+        }
+
+        function stopGuessTimer() {
+            if (guessTimer) {
+                clearInterval(guessTimer);
+                guessTimer = null;
+            }
+        }
+
+        function preloadTrackAndStart(trackUrl, callback) {
+            resetAudioState();
+            
+            if (preloadTimeout) {
+                clearTimeout(preloadTimeout);
+                preloadTimeout = null;
+            }
+
+            audio = new Audio();
+            audio.preload = "auto";
+            audio.src = trackUrl;
+
+            let isLoaded = false;
+            const proceed = () => {
+                if (!isLoaded) {
+                    isLoaded = true;
+                    audio.removeEventListener('canplaythrough', proceed);
+                    audio.removeEventListener('loadeddata', proceed);
+                    
+                    if (preloadTimeout) {
+                        clearTimeout(preloadTimeout);
+                        preloadTimeout = null;
+                    }
+                    if (callback) callback();
+                }
+            };
+
+            audio.addEventListener('canplaythrough', proceed);
+            audio.addEventListener('loadeddata', proceed);
+            preloadTimeout = setTimeout(proceed, 4000); 
+            audio.load();
+        }
+
+        function prepareAndLoadTrackMulti() {
+            const overlay = document.getElementById("screenCountdown");
+            overlay.style.display = "flex";
+            const countNum = document.getElementById("countdownNum");
+            
+            countNum.style.fontSize = "48px";
+            countNum.innerText = "GET READY!";
+            countNum.style.color = "#f3c969";
+            countNum.classList.add("arcade-blink");
+
+            preloadTrackAndStart(playlist[currentSongIndex].file, () => {
+                socket.emit('track_loaded', { room_code: currentRoomCode });
+            });
+        }
+
+        function startSoloDirect() {
+            if (playlist && playlist[currentSongIndex]) {
+                preloadTrackAndStart(playlist[currentSongIndex].file, () => {
+                    updateUI();
+                    startNewTrackSession();
+                });
+            }
+        }
+
+        async function initiateSoloGame() {
+            audio.play().then(() => audio.pause()).catch(() => {});
+            getAudioContext();
+            playConfirmSound();
+
+            const btn = document.getElementById("startActionBtn");
+            btn.innerText = "LOADING...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/get-tracks?lang=${selectedLang}`);
+                const data = await res.json();
+                playlist = data.tracks;
+
+                if (!playlist || playlist.length === 0) throw new Error("No tracks");
+
+                document.getElementById("screenLangStep").style.display = "none";
+                btn.innerText = "▶ START";
+                btn.disabled = false;
+                startSoloDirect();
+            } catch (err) {
+                btn.innerText = "RETRY";
+                btn.disabled = false;
+            }
+        }
+
+        function openCreateRoomView() {
+            const btn = document.getElementById("btnCreateRoomAction");
+            if (btn) {
+                btn.innerText = "CREATING...";
+                btn.disabled = true;
+            }
+
+            audio.play().then(() => audio.pause()).catch(() => {});
+            getAudioContext();
+            playConfirmSound();
+            isHost = true;
+            socket.emit('create_room', { player_name: playerTag, lang_mode: multiSelectedLang });
+        }
+
+        function joinRoomAction() {
+            const codeInput = document.getElementById("roomCodeInput");
+            const code = codeInput ? codeInput.value.trim().toUpperCase() : "";
+            if (!code) {
+                playWrongSound();
+                return;
+            }
+
+            audio.play().then(() => audio.pause()).catch(() => {});
+            getAudioContext();
+
+            playConfirmSound();
+            isHost = false;
+            socket.emit('join_room_req', { room_code: code, player_name: playerTag });
+        }
+
+        function hostStartGame() {
+            audio.play().then(() => audio.pause()).catch(() => {});
+            getAudioContext();
+            playConfirmSound();
+            socket.emit('start_multiplayer_game', { room_code: currentRoomCode });
+        }
+
+        socket.on('room_created', (data) => {
+            const btn = document.getElementById("btnCreateRoomAction");
+            if (btn) {
+                btn.innerText = "👑 CREATE ROOM";
+                btn.disabled = false;
+            }
+
+            currentRoomCode = data.room_code;
+            document.getElementById("lobbyLangBadge").innerText = data.lang_mode;
+            document.getElementById("screenMultiStep").style.display = "none";
+            document.getElementById("screenRoomLobby").style.display = "flex";
+            document.getElementById("lobbyRoomCode").innerText = currentRoomCode;
+            document.getElementById("lobbyPlayersList").innerText = `1/2: ${playerTag} (HOST)`;
+            
+            const startBtn = document.getElementById("btnHostStart");
+            startBtn.style.display = "block";
+            startBtn.innerText = "WAITING 2ND PLAYER...";
+            startBtn.disabled = true;
+            document.getElementById("clientWaitingNotice").style.display = "none";
+        });
+
+        socket.on('joined_successfully', (data) => {
+            currentRoomCode = data.room_code;
+            document.getElementById("lobbyLangBadge").innerText = data.lang_mode || "TR";
+            document.getElementById("screenMultiStep").style.display = "none";
+            document.getElementById("screenRoomLobby").style.display = "flex";
+            document.getElementById("lobbyRoomCode").innerText = currentRoomCode;
+            document.getElementById("btnHostStart").style.display = "none";
+            document.getElementById("clientWaitingNotice").style.display = "block";
+            
+            const errorEl = document.getElementById("lobbyErrorText");
+            if (errorEl) errorEl.innerText = "";
+        });
+
+        socket.on('player_list_update', (data) => {
+            const players = data.players;
+            latestPlayersState = players;
+            let listText = players.map(p => `${p.name} ${p.is_host ? '(HOST)' : ''}`).join(" vs ");
+            document.getElementById("lobbyPlayersList").innerText = listText;
+
+            if (isHost && players.length >= 2) {
+                const startBtn = document.getElementById("btnHostStart");
+                startBtn.innerText = "▶ START DUEL";
+                startBtn.disabled = false;
+            }
+        });
+
+        socket.on('error_msg', (data) => {
+            playWrongSound();
+            triggerHaptic(80);
+            
+            const errorEl = document.getElementById("lobbyErrorText");
+            const roomInput = document.getElementById("roomCodeInput");
+            
+            if (errorEl) {
+                errorEl.innerText = "❌ " + data.msg;
+                
+                if (roomInput && data.msg.toLowerCase().includes("room") || data.msg.toLowerCase().includes("username")) {
+                    roomInput.classList.add("input-error");
+                    setTimeout(() => roomInput.classList.remove("input-error"), 350);
+                }
+                
+                setTimeout(() => {
+                    errorEl.innerText = "";
+                }, 3500);
+            } else {
+                alert(data.msg);
+            }
+
+            const createBtn = document.getElementById("btnCreateRoomAction");
+            if (createBtn && createBtn.innerText === "CREATING...") {
+                createBtn.innerText = "👑 CREATE ROOM";
+                createBtn.disabled = false;
+            }
+        });
+
+        socket.on('game_started', (data) => {
+            playlist = data.playlist;
+            latestPlayersState = data.players;
+            currentSongIndex = 0;
+            document.getElementById("screenRoomLobby").style.display = "none";
+            getAudioContext();
+            prepareAndLoadTrackMulti();
+        });
+
+        socket.on('all_players_ready', () => {
+            startVisualCountdownMulti();
+        });
+
+        function handleMultiRoundEnd() {
+            isLocked = true;
+            stopGuessTimer();
+            stopAudioOnly();
+            hasVotedPass = false;
+
+            if (isHost) {
+                setTimeout(() => {
+                    socket.emit('host_trigger_next', { room_code: currentRoomCode });
+                }, 2000);
+            }
+        }
+
+        socket.on('pass_voted_update', (data) => {
+            playButtonPressSound();
+            const passBtn = document.getElementById("passBtn");
+            if (passBtn) {
+                passBtn.innerText = `⏳ PASS (${data.pass_count}/${data.total_players})`;
+            }
+            const msg = document.getElementById("screenMsg");
+            if (msg) {
+                msg.style.color = "#d8cbb5";
+                msg.innerText = `⚠️ ${data.voter_name} VOTED PASS (${data.pass_count}/${data.total_players})`;
+            }
+        });
+
+        socket.on('both_passed_next', () => {
+            handleMultiRoundEnd();
+            playPassSound();
+
+            const msg = document.getElementById("screenMsg");
+            if (msg) {
+                msg.style.color = "#d8cbb5";
+                msg.innerText = "⏭️ BOTH PASSED! (0 PTS)";
+            }
+            revealTitle();
+        });
+
+        socket.on('round_winner', (data) => {
+            handleMultiRoundEnd();
+
+            latestPlayersState = data.players;
+            const me = data.players.find(p => p.name === playerTag);
+            if (me) score = me.score;
+
+            const isMe = (data.winner_name === playerTag);
+            const ptsEarned = data.points_earned || 10;
+            const msg = document.getElementById("screenMsg");
+
+            if (isMe) {
+                playSuccessSound();
+                triggerHaptic([50, 50, 100]);
+                if (msg) {
+                    msg.style.color = "#588157";
+                    msg.innerText = `🎉 YOU GUESSED IT! (+${ptsEarned} PTS)`;
+                }
+            } else {
+                playOpponentScoredSound();
+                triggerHaptic(150);
+                if (msg) {
+                    msg.style.color = "#e76f51";
+                    msg.innerText = `⚡ ${data.winner_name} WAS FASTER! (+${ptsEarned} PTS)`;
+                }
+            }
+
+            revealTitle();
+            updateUI();
+        });
+
+        socket.on('round_timeout_broadcast', () => {
+            handleMultiRoundEnd();
+            playPassSound();
+
+            const msg = document.getElementById("screenMsg");
+            if (msg) {
+                msg.style.color = "#a44a3f";
+                msg.innerText = "💀 TIME OUT!";
+            }
+            revealTitle();
+            updateUI();
+        });
+
+        socket.on('next_round_sync', (data) => {
+            currentSongIndex = data.track_index;
+            const input = document.getElementById("guessInput");
+            if (input) input.value = "";
+            const msg = document.getElementById("screenMsg");
+            if (msg) msg.style.color = "#d8cbb5";
+
+            prepareAndLoadTrackMulti();
+        });
+
+        socket.on('game_over_sync', (data) => {
+            latestPlayersState = data.players;
+            finishGameAndShowLeaderboard();
+        });
+
+        socket.on('opponent_left', (data) => {
+            isLocked = true;
+            stopGuessTimer();
+            stopAudioOnly();
+            const msg = document.getElementById("screenMsg");
+            if (msg) {
+                msg.style.color = "#a44a3f";
+                msg.innerText = "💀 OPPONENT LEFT!";
+            }
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        });
+
+        function startVisualCountdownMulti() {
+            const overlay = document.getElementById("screenCountdown");
+            overlay.style.display = "flex";
+            let count = 3;
+            const countNum = document.getElementById("countdownNum");
+            
+            countNum.classList.remove("arcade-blink");
+            countNum.style.fontSize = "72px"; 
+            countNum.innerText = count;
+            countNum.style.color = "#f3c969";
+            playBeepSound();
+
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countNum.innerText = count;
+                    playBeepSound();
+                } else if (count === 0) {
+                    countNum.innerText = "GO!";
+                    countNum.style.color = "#588157";
+                    playGoSound();
+                } else {
+                    clearInterval(timer);
+                    overlay.style.display = "none";
+                    updateUI();
+                    startNewTrackSession();
+                }
+            }, 800);
+        }
+
+        function revealTitle() {
+            const display = document.getElementById("songDisplay");
+            if (display && playlist[currentSongIndex]) {
+                display.innerText = `${playlist[currentSongIndex].title.toUpperCase()} - ${playlist[currentSongIndex].artist.toUpperCase()}`;
+                display.className = "song-title revealed-title";
+            }
+        }
+
+        function startNewTrackSession() {
+            stopGuessTimer();
+            stopAudioOnly();
+
+            currentStep = 0;
+            revealedLetters = [];
+            timeLeft = TOTAL_GUESS_TIME;
+            timerStartedForThisTrack = false;
+            isLocked = false;
+            hasVotedPass = false;
+            
+            const passBtn = document.getElementById("passBtn");
+            if (passBtn) {
+                passBtn.classList.remove("voted-pass");
+                passBtn.innerText = "⏭ PASS";
+            }
+            
+            renderMysteryMask();
+            updateUI();
+
+            const timerLabel = document.getElementById("guessTimerLabel");
+            const fill = document.getElementById("timerFill");
+            if (timerLabel) timerLabel.innerText = `GUESS: 20s`;
+            if (fill) {
+                fill.style.width = `100%`;
+                fill.style.backgroundColor = "#588157";
+            }
+
+            const msg = document.getElementById("screenMsg");
+            if (msg) {
+                msg.style.color = "#d8cbb5";
+                msg.innerText = "🎧 PLAYING...";
+            }
+
+            const input = document.getElementById("guessInput");
+            if (input) {
+                input.value = "";
+                if (window.innerWidth > 768) {
+                    input.focus();
+                }
+            }
+
+            audio.currentTime = 0;
+            playAudioUntil(addedDurations[0]);
+        }
+
+        function start20SecTimer() {
+            if (timerStartedForThisTrack) return;
+            timerStartedForThisTrack = true;
+
+            stopGuessTimer();
+            const timerLabel = document.getElementById("guessTimerLabel");
+            const fill = document.getElementById("timerFill");
+
+            const intervalMs = 50;
+            guessTimer = setInterval(() => {
+                timeLeft -= (intervalMs / 1000);
+
+                if (timeLeft <= 0) {
+                    timeLeft = 0;
+                    stopGuessTimer();
+                    stopAudioOnly();
+                    handleTimeOut();
+                }
+
+                const percentage = Math.max(0, (timeLeft / TOTAL_GUESS_TIME) * 100);
+                if (fill) {
+                    fill.style.width = `${percentage}%`;
+                    if (percentage > 50) fill.style.backgroundColor = "#588157";
+                    else if (percentage > 25) fill.style.backgroundColor = "#cb993b";
+                    else fill.style.backgroundColor = "#a44a3f";
+                }
+
+                if (timerLabel) timerLabel.innerText = `GUESS: ${Math.ceil(timeLeft)}s`;
+            }, intervalMs);
+        }
+
+        function playAudioUntil(targetEndTime) {
+            if (audioPlayInterval) {
+                clearInterval(audioPlayInterval);
+                audioPlayInterval = null;
+            }
+
+            const visualizer = document.getElementById("visualizer");
+
+            audio.onplaying = () => {
+                if (visualizer) visualizer.classList.add("playing");
+                start20SecTimer();
+            };
+
+            audio.play().then(() => {
+                audioPlayInterval = setInterval(() => {
+                    if (audio.currentTime >= targetEndTime || audio.ended) {
+                        stopAudioOnly();
+                        const msg = document.getElementById("screenMsg");
+                        if (!isLocked && msg) {
+                            msg.style.color = "#d8cbb5";
+                            msg.innerText = "⏱️ GUESS NOW!";
+                        }
+                    }
+                }, 20);
+
+            }).catch(e => {
+                stopAudioOnly();
+                start20SecTimer();
+            });
+        }
+
+        function getTimeExtension() {
+            const input = document.getElementById("guessInput");
+            if (input) input.focus();
+
+            if (isLocked) return;
+            playButtonPressSound();
+
+            if (currentStep < 2) {
+                currentStep++;
+                const additionalTime = addedDurations[currentStep];
+                const targetEndTime = audio.currentTime + additionalTime;
+                
+                updateUI();
+                const msg = document.getElementById("screenMsg");
+                if (msg) {
+                    msg.style.color = "#d8cbb5";
+                    msg.innerText = `🎧 +${additionalTime.toFixed(1)}s EXTENDED...`;
+                }
+                
+                playAudioUntil(targetEndTime);
+            } else {
+                const msg = document.getElementById("screenMsg");
+                if (msg) msg.innerText = "MAX EXTENSION REACHED!";
+            }
+        }
+
+        function getLetterHint() {
+            const input = document.getElementById("guessInput");
+            if (input) input.focus();
+
+            if (isLocked || remainingHints <= 0) {
+                playWrongSound();
+                return;
+            }
+            playButtonPressSound();
+
+            const songNameOnly = playlist[currentSongIndex].title.toUpperCase();
+            const eligibleIndices = [];
+            const letterRegex = /[A-Z0-9ÇĞİÖŞÜ]/i;
+
+            for (let i = 0; i < songNameOnly.length; i++) {
+                if (songNameOnly[i] !== ' ' && !revealedLetters.includes(i) && letterRegex.test(songNameOnly[i])) {
+                    eligibleIndices.push(i);
+                }
+            }
+
+            if (eligibleIndices.length > 0) {
+                const randomIndex = eligibleIndices[Math.floor(Math.random() * eligibleIndices.length)];
+                revealedLetters.push(randomIndex);
+                remainingHints--;
+                playBeepSound();
+                renderMysteryMask();
+                updateUI();
+
+                const msg = document.getElementById("screenMsg");
+                if (msg) {
+                    msg.style.color = "#d8cbb5";
+                    msg.innerText = `💡 LETTER REVEALED!`;
+                }
+            }
+        }
+
+        function passSong() {
+            if (isLocked) return;
+
+            if (gameMode === "MULTI") {
+                if (hasVotedPass) return;
+                hasVotedPass = true;
+                playButtonPressSound();
+                
+                const passBtn = document.getElementById("passBtn");
+                if (passBtn) passBtn.classList.add("voted-pass");
+                
+                socket.emit('vote_pass_sync', { room_code: currentRoomCode, player_name: playerTag });
+                return;
+            }
+
+            isLocked = true;
+            stopGuessTimer();
+            stopAudioOnly();
+            playPassSound();
+
+            const msg = document.getElementById("screenMsg");
+            if (msg) {
+                msg.style.color = "#d8cbb5";
+                msg.innerText = "⏭ PASSED! (0 PTS)";
+            }
+            revealTitle();
+            setTimeout(nextSongSolo, 1500);
+        }
+
+        function handleTimeOut() {
+            if (isLocked) return;
+            isLocked = true;
+            stopGuessTimer();
+            stopAudioOnly();
+
+            if (gameMode === "MULTI") {
+                socket.emit('timeout_sync', { room_code: currentRoomCode });
+                return;
+            }
+
+            playPassSound();
+            score = Math.max(0, score - 5);
+            updateUI();
+
+            const msg = document.getElementById("screenMsg");
+            if (msg) {
+                msg.style.color = "#a44a3f";
+                msg.innerText = "💀 TIME OUT!";
+            }
+            revealTitle();
+            setTimeout(nextSongSolo, 1500);
+        }
+
+        function submitGuess() {
+            if (isLocked) return;
+
+            const input = document.getElementById("guessInput");
+            const userRaw = input ? input.value.trim() : "";
+            const msg = document.getElementById("screenMsg");
+
+            if (!userRaw) {
+                playWrongSound();
+                if (msg) msg.innerText = "TYPE A TRACK FIRST!";
+                return;
+            }
+
+            const userClean = cleanText(userRaw);
+            const targetClean = cleanText(playlist[currentSongIndex].title);
+
+            if (userClean === targetClean) {
+                const earned = calculateCurrentPoints();
+
+                if (gameMode === "MULTI") {
+                    isLocked = true; 
+                    socket.emit('correct_guess_sync', { 
+                        room_code: currentRoomCode,
+                        points_earned: earned
+                    });
+                } else {
+                    isLocked = true;
+                    stopGuessTimer();
+                    stopAudioOnly();
+                    playSuccessSound();
+                    score += earned;
+                    updateUI();
+                    if (msg) {
+                        msg.style.color = "#588157";
+                        msg.innerText = `🎉 CORRECT! +${earned} PTS`;
+                    }
+                    revealTitle();
+                    setTimeout(nextSongSolo, 1500);
+                }
+            } else {
+                playWrongSound();
+                triggerHaptic(80);
+                if (msg) {
+                    msg.style.color = "#a44a3f";
+                    msg.innerText = "❌ WRONG GUESS!";
+                }
+                
+                if (input) {
+                    input.value = "";
+                    input.classList.add("input-error");
+                    setTimeout(() => input.classList.remove("input-error"), 350);
+                    input.focus();
+                }
+            }
+        }
+
+        function nextSongSolo() {
+            stopGuessTimer();
+            stopAudioOnly();
+            currentSongIndex++;
+
+            const input = document.getElementById("guessInput");
+            if (input) input.value = "";
+            const msg = document.getElementById("screenMsg");
+            if (msg) msg.style.color = "#d8cbb5";
+
+            if (currentSongIndex >= playlist.length) {
+                finishGameAndShowLeaderboard();
+                return;
+            }
+
+            startSoloDirect();
+        }
+
+        async function finishGameAndShowLeaderboard() {
+            stopGuessTimer();
+            stopAudioOnly();
+
+            let headerTitleHtml = "";
+            let rowsHtml = "";
+
+            if (gameMode === "MULTI") {
+                const sortedPlayers = [...latestPlayersState].sort((a, b) => b.score - a.score);
+                const p1 = sortedPlayers[0] || { name: playerTag, score: score };
+                const p2 = sortedPlayers[1] || { name: "OPPONENT", score: 0 };
+
+                const isDraw = (p1.score === p2.score);
+                const amIWinner = (!isDraw && p1.name === playerTag);
+
+                if (isDraw) {
+                    playConfirmSound();
+                    headerTitleHtml = `<h2 style="font-size: 24px; color: #f3c969; margin-bottom: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">🤝 IT'S A DRAW!</h2>`;
+                } else if (amIWinner) {
+                    playSuccessSound();
+                    headerTitleHtml = `<h2 style="font-size: 24px; color: #588157; margin-bottom: 2px; text-shadow: 0 0 10px rgba(88,129,87,0.8);">🏆 WINNER: ${playerTag}</h2>`;
+                } else {
+                    playWrongSound();
+                    headerTitleHtml = `<h2 style="font-size: 24px; color: #a44a3f; margin-bottom: 2px; text-shadow: 0 0 10px rgba(164,74,63,0.8);">💀 DEFEAT!</h2>`;
+                }
+
+                rowsHtml = sortedPlayers.map((p, idx) => {
+                    const isTop = (idx === 0 && !isDraw);
+                    return `
+                        <div class="leaderboard-row ${isTop ? 'winner-row' : ''}">
+                            <span>#${idx + 1} ${p.name} ${isTop ? '🏆' : ''}</span>
+                            <span style="color: #f3c969;">${p.score} PTS</span>
+                        </div>
+                    `;
+                }).join('');
+
+            } else {
+                playSuccessSound();
+                try {
+                    await fetch('/api/save-score', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ player_name: playerTag, score: score, lang_mode: selectedLang })
+                    });
+                } catch (e) {}
+
+                try {
+                    const response = await fetch('/api/top-scores');
+                    const topScores = await response.json();
+                    rowsHtml = topScores.map((item, i) => `
+                        <div class="leaderboard-row ${i === 0 ? 'winner-row' : ''}">
+                            <span>#${i + 1} ${item.player_name} ${i === 0 ? '🏆' : ''}</span>
+                            <span style="color: #f3c969;">${item.score} PTS</span>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    rowsHtml = `<div class="leaderboard-row winner-row"><span>#1 ${playerTag} 🏆</span><span style="color: #f3c969;">${score} PTS</span></div>`;
+                }
+
+                headerTitleHtml = `<h2 style="font-size: 26px; color: #f3c969; margin-bottom: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">🏆 SOLO LEADERBOARD</h2>`;
+            }
+
+            document.getElementById("mainScreen").innerHTML = `
+                <div style="text-align: center; padding: 4px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                    <div>
+                        ${headerTitleHtml}
+                        <p style="font-size: 18px; color: #a3c9a8;">FINAL SCORE: ${score} PTS</p>
+                    </div>
+                    <div class="leaderboard-list">
+                        ${rowsHtml}
+                    </div>
+                    <div style="font-size: 15px; color: #7ca982;">GAME OVER</div>
+                </div>
+            `;
+
+            document.getElementById("controlsArea").innerHTML = `
+                <button class="p-btn btn-start" style="width: 100%;" onclick="location.reload()">▶ PLAY AGAIN</button>
+            `;
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
