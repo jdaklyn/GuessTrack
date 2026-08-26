@@ -579,9 +579,8 @@
             </div>
         </div>
     </div>
-
-    <script>
-        const socket = io();
+<script>
+    const socket = io();
 
         let playlist = [];
         const addedDurations = [1.5, 4.0, 8.0];
@@ -591,6 +590,7 @@
         let currentStep = 0;       
         let currentSongIndex = 0;
         let score = 0;
+        let correctGuesses = 0; // Doğru bilme sayacı
         let isLocked = false;
         let playerTag = "";
         let selectedLang = "TR";
@@ -626,7 +626,6 @@
             return audioCtx;
         }
 
-        // Global Ses Kilidi Açıcı
         window.addEventListener('pointerdown', () => {
             getAudioContext();
         }, { once: true });
@@ -979,11 +978,11 @@
                 if (gameMode === "MULTI") {
                     if (!hasVotedPass) {
                         passBtn.className = "p-btn btn-pass";
-                        passBtn.innerText = "⏭ PASS";
+                        passBtn.innerText = ">> PASS";
                     }
                 } else {
                     passBtn.className = "p-btn btn-pass";
-                    passBtn.innerText = "⏭ PASS";
+                    passBtn.innerText = ">> PASS";
                 }
             }
         }
@@ -1019,7 +1018,6 @@
             }
         }
 
-        // 1. DÜZELTME: Senkronizasyon (Pro Mod) - Sadece canplaythrough dinlenir!
         function preloadTrackAndStart(trackUrl, callback) {
             resetAudioState();
             
@@ -1045,11 +1043,7 @@
                 }
             };
 
-            // ÖNEMLİ: Sadece şarkının kesintisiz çalınabileceği 'canplaythrough' anını bekliyoruz. 
-            // Eski 'loadeddata' (ilk saniye yüklendi) kodu kaldırıldı çünkü erken başlamaya sebep oluyordu!
             audio.addEventListener('canplaythrough', proceed);
-            
-            // Eğer 5 saniye içinde yüklenmezse (çok yavaş internet), mecburen zorla devam et (oyun kilitlenmesin diye)
             preloadTimeout = setTimeout(proceed, 5000); 
             audio.load();
         }
@@ -1082,6 +1076,9 @@
             audio.play().then(() => audio.pause()).catch(() => {});
             getAudioContext();
             playConfirmSound();
+
+            correctGuesses = 0; // Yeni oyun için sayacı sıfırlıyoruz
+            score = 0;
 
             const btn = document.getElementById("startActionBtn");
             btn.innerText = "LOADING...";
@@ -1263,7 +1260,7 @@
             const msg = document.getElementById("screenMsg");
             if (msg) {
                 msg.style.color = "#d8cbb5";
-                msg.innerText = "⏭️ BOTH PASSED! (0 PTS)";
+                msg.innerText = ">> BOTH PASSED! (0 PTS)";
             }
             revealTitle();
         });
@@ -1393,7 +1390,7 @@
             const passBtn = document.getElementById("passBtn");
             if (passBtn) {
                 passBtn.classList.remove("voted-pass");
-                passBtn.innerText = "⏭ PASS";
+                passBtn.innerText = ">> PASS";
             }
             
             renderMysteryMask();
@@ -1572,7 +1569,7 @@
             const msg = document.getElementById("screenMsg");
             if (msg) {
                 msg.style.color = "#d8cbb5";
-                msg.innerText = "⏭️ PASSED! (0 PTS)";
+                msg.innerText = ">> PASSED! (0 PTS)";
             }
             revealTitle();
             setTimeout(nextSongSolo, 1500);
@@ -1633,6 +1630,7 @@
                     stopAudioOnly();
                     playSuccessSound();
                     score += earned;
+                    correctGuesses++; // BİLDİĞİ ZAMAN SAYACI ARTIR!
                     updateUI();
                     if (msg) {
                         msg.style.color = "#588157";
@@ -1676,7 +1674,6 @@
             startSoloDirect();
         }
 
-        // 2. DÜZELTME: Solo Mod Puan Ekranı - Artık sadece kendi puanın çıkıyor!
         async function finishGameAndShowLeaderboard() {
             stopGuessTimer();
             stopAudioOnly();
@@ -1714,7 +1711,6 @@
                 }).join('');
 
             } else {
-                // SOLO MOD EKRANI 
                 playSuccessSound();
                 try {
                     await fetch('/api/save-score', {
@@ -1724,25 +1720,31 @@
                     });
                 } catch (e) {}
 
-                // Herkesi görmek yerine sadece senin puanını büyük bir şekilde gösteriyoruz!
-                headerTitleHtml = `<h2 style="font-size: 26px; color: #f3c969; margin-bottom: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">🏁 STAGE CLEAR!</h2>`;
+                // DOĞRU BİLME SAYISINA GÖRE RÜTBELER!
+                let rankText = "MUSIC NOVICE";
+                if (correctGuesses === 5) rankText = "MASTER OF SONGS";
+                else if (correctGuesses === 4) rankText = "GREAT EARS";
+                else if (correctGuesses === 3) rankText = "GOOD EFFORT";
+                else if (correctGuesses === 2) rankText = "NEEDS PRACTICE";
+                else if (correctGuesses === 1) rankText = "LUCKY GUESS";
+
+                headerTitleHtml = `<h2 style="font-size: 28px; color: #f3c969; margin-bottom: 8px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">GAME OVER</h2>`;
                 rowsHtml = `
+                    <div style="font-size: 22px; color: #a3c9a8; margin-bottom: 12px;">FINAL SCORE: <span style="color: #fff;">${score} PTS</span></div>
                     <div class="leaderboard-row winner-row" style="justify-content: center; padding: 15px;">
-                        <span style="font-size: 22px;">🎯 SENİN PUANIN: <span style="color: #f3c969; font-weight: bold;">${score} PTS</span></span>
+                        <span style="font-size: 22px;">RANK: <span style="color: #f3c969; font-weight: bold; letter-spacing: 1px;">${rankText}</span></span>
                     </div>
                 `;
             }
 
             document.getElementById("mainScreen").innerHTML = `
-                <div style="text-align: center; padding: 4px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                <div style="text-align: center; padding: 4px; display: flex; flex-direction: column; justify-content: center; gap: 20px; height: 100%;">
                     <div>
                         ${headerTitleHtml}
-                        <p style="font-size: 18px; color: #a3c9a8;">FINAL SCORE: ${score} PTS</p>
                     </div>
                     <div class="leaderboard-list">
                         ${rowsHtml}
                     </div>
-                    <div style="font-size: 15px; color: #7ca982;">GAME OVER</div>
                 </div>
             `;
 
@@ -1752,6 +1754,7 @@
         }
 
         updateUI();
-    </script>
+</script>
+   
 </body>
 </html>
