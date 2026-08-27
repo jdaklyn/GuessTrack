@@ -28,5 +28,5 @@ To run this project locally on your machine, follow these steps:
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/jdaklyn/GuessTrack.git](https://github.com/jdaklyn/GuessTrack.git)
+   git clone https://github.com/jdaklyn/GuessTrack.git
    cd GuessTrack
