@@ -527,7 +527,7 @@
                 </div>
                 <div id="lobbyPlayersList" style="font-size: 18px; color: #f3c969; margin: 4px 0;">WAITING OPPONENT...</div>
                 
-                <button class="p-btn btn-start" id="btnHostStart" style="width: 85%; display: none;" onclick="hostStartGame()">▶ START DUEL</button>
+                <button class="p-btn btn-host" id="btnHostStart" style="width: 85%; display: none;" onclick="hostStartGame()">▶ START DUEL</button>
                 
                 <div id="clientWaitingNotice" class="client-wait-box arcade-blink" style="display: none;">
                     ⏳ WAITING FOR HOST TO START...
@@ -1679,7 +1679,7 @@
             stopAudioOnly();
 
             let headerTitleHtml = "";
-            let rowsHtml = "";
+            let contentHtml = "";
 
             if (gameMode === "MULTI") {
                 const sortedPlayers = [...latestPlayersState].sort((a, b) => b.score - a.score);
@@ -1700,7 +1700,7 @@
                     headerTitleHtml = `<h2 style="font-size: 24px; color: #a44a3f; margin-bottom: 2px; text-shadow: 0 0 10px rgba(164,74,63,0.8);">💀 DEFEAT!</h2>`;
                 }
 
-                rowsHtml = sortedPlayers.map((p, idx) => {
+                const rowsHtml = sortedPlayers.map((p, idx) => {
                     const isTop = (idx === 0 && !isDraw);
                     return `
                         <div class="leaderboard-row ${isTop ? 'winner-row' : ''}">
@@ -1709,9 +1709,19 @@
                         </div>
                     `;
                 }).join('');
+                
+                contentHtml = `<div class="leaderboard-list">${rowsHtml}</div>`;
+
+                document.getElementById("mainScreen").innerHTML = `
+                    <div style="text-align: center; padding: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+                        ${headerTitleHtml}
+                        ${contentHtml}
+                    </div>
+                `;
 
             } else {
                 playSuccessSound();
+                
                 try {
                     await fetch('/api/save-score', {
                         method: 'POST',
@@ -1720,11 +1730,12 @@
                     });
                 } catch (e) {}
 
+                let rowsHtml = "";
                 try {
                     const response = await fetch('/api/top-scores');
                     const topScores = await response.json();
                     rowsHtml = topScores.map((item, i) => `
-                        <div class="leaderboard-row ${i === 0 ? 'winner-row' : ''}">
+                        <div class="leaderboard-row ${i === 0 ? 'winner-row' : ''}" style="padding: 4px 8px; font-size: 16px;">
                             <span>#${i + 1} ${item.player_name} ${i === 0 ? '🏆' : ''}</span>
                             <span style="color: #f3c969;">${item.score} PTS</span>
                         </div>
@@ -1733,27 +1744,49 @@
                     rowsHtml = `<div class="leaderboard-row winner-row"><span>#1 ${playerTag} 🏆</span><span style="color: #f3c969;">${score} PTS</span></div>`;
                 }
 
-                headerTitleHtml = `<h2 style="font-size: 26px; color: #f3c969; margin-bottom: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">🏆 SOLO LEADERBOARD</h2>`;
+                headerTitleHtml = `<h2 style="font-size: 32px; color: #f3c969; margin-bottom: 5px; text-shadow: 0 0 10px rgba(243,201,105,0.8);">GAME OVER!</h2>`;
+                
+                contentHtml = `
+                    <div style="font-size: 20px; color: #a3c9a8; margin-top: 10px;">
+                        YOUR FINAL SCORE:<br>
+                        <span style="font-size: 52px; color: #588157; text-shadow: 0 0 15px rgba(88,129,87,0.6); display: inline-block; margin-top: 5px;">${score} PTS</span>
+                    </div>
+                    
+                    <button class="p-btn btn-pass" style="margin-top: 15px; font-size: 16px; padding: 6px 12px; border-radius: 4px;" onclick="toggleLeaderboard()">🏆 VIEW TOP SCORES</button>
+                    
+                    <div id="hiddenLeaderboard" style="display: none; margin-top: 10px; width: 100%; max-height: 140px; overflow-y: auto;">
+                        <div class="leaderboard-list">
+                            ${rowsHtml}
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById("mainScreen").innerHTML = `
+                    <div style="text-align: center; padding: 10px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; height: 100%;">
+                        ${headerTitleHtml}
+                        ${contentHtml}
+                    </div>
+                `;
             }
 
-            document.getElementById("mainScreen").innerHTML = `
-                <div style="text-align: center; padding: 4px; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
-                    <div>
-                        ${headerTitleHtml}
-                        <p style="font-size: 18px; color: #a3c9a8;">FINAL SCORE: ${score} PTS</p>
-                    </div>
-                    <div class="leaderboard-list">
-                        ${rowsHtml}
-                    </div>
-                    <div style="font-size: 15px; color: #7ca982;">GAME OVER</div>
-                </div>
-            `;
-
             document.getElementById("controlsArea").innerHTML = `
-                <button class="p-btn btn-start" style="width: 100%;" onclick="location.reload()">▶ PLAY AGAIN</button>
+                <button class="p-btn btn-start" style="width: 100%; font-size: 24px; padding: 12px;" onclick="location.reload()">▶ PLAY AGAIN</button>
             `;
         }
 
+        function toggleLeaderboard() {
+            const lb = document.getElementById("hiddenLeaderboard");
+            if (lb) {
+                if (lb.style.display === "none") {
+                    lb.style.display = "block";
+                    playButtonPressSound();
+                } else {
+                    lb.style.display = "none";
+                    playClickSound();
+                }
+            }
+        }
+        
         updateUI();
     </script>
 </body>

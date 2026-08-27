@@ -39,11 +39,10 @@ TR_HITS = [
 
 EN_HITS = [
     "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "AC/DC", "Metallica",
-    "Bon Jovi", "Marilyn Manson", "The Cranberries", "Metallica", "Tamino",
+    "Bon Jovi", "Marilyn Manson", "The Cranberries", "Tamino",
     "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Calvin Harris", "Modern Talking"
 ]
 
-# Türkçe modunda çalması istenmeyen İngilizce/Eurovision şarkılarının kara listesi
 EXCLUDED_TR_TITLES = [
     "love me back", "we could be the same", "everyway that i can", 
     "for real", "shake it up", "dum tek tek", "always", "feel your love"
@@ -58,22 +57,20 @@ def fetch_itunes_tracks(artist_list, limit=5):
         try:
             is_tr = artist in TR_HITS
             country_code = "tr" if is_tr else "us"
-            # Limiti 30 yaparak şarkı havuzunu genişlettik
             url = f"https://itunes.apple.com/search?term={requests.utils.quote(artist)}&country={country_code}&entity=song&attribute=artistTerm&limit=30"
             res = requests.get(url, timeout=4).json()
             
             results = []
             for r in res.get('results', []):
                 if r.get('previewUrl') and r.get('trackName'):
-                    
-                    # Şarkı ismini kontrol et ve kara listedeyse atla
                     raw_name_test = r['trackName'].lower()
                     if is_tr and any(ex in raw_name_test for ex in EXCLUDED_TR_TITLES):
                         continue
                         
                     art_clean = artist.lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
                     res_art_clean = r.get('artistName', '').lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
-                    if art_clean in res_art_clean or res_art_clean in art_clean:
+                    
+                    if art_clean == res_art_clean:
                         results.append(r)
             
             if results:

@@ -1,44 +1,32 @@
 # 🎵 GuessTrack
 
-> A retro arcade-inspired, real-time multiplayer music guessing game built with Flask, Socket.IO, and the iTunes Search API.
+<p align="center">
+  <img src="img/1.png" width="30%">
+  <img src="img/2.png" width="30%">
+  <img src="img/3.png" width="30%">
+</p>
 
----
+GuessTrack is a real-time, retro-arcade style music guessing game. Test your music knowledge by listening to short audio previews and identifying the correct tracks before time runs out. Play solo to climb the global leaderboard or challenge a friend in the real-time 1v1 multiplayer arena!
 
-## 🎮 Overview
+## ✨ Features
 
-**GuessTrack** delivers a nostalgic handheld console experience right in your browser. Test your music knowledge in single-player mode or challenge your friends in real-time **1v1 Duels**. Listen to progressive audio snippets, guess the track name letter-for-letter before time runs out, and climb the leaderboard!
+* **Solo & 1v1 Multiplayer Modes:** Features a local solo progression system and a live multiplayer mode utilizing WebSockets for real-time room creation and competitive duels.
+* **Retro Arcade UI:** Designed with a custom pixel-art aesthetic, featuring CRT screen effects, animated visualizers, and interactive haptic feedback.
+* **Music API Integration:** Dynamically fetches audio previews across different languages (English/Turkish) using exact-match filtering for accuracy.
+* **Live Leaderboard:** Integrated SQLite database to track, save, and display the top-scoring players seamlessly.
 
----
+## 🛠️ Tech Stack & Structure
 
-## ✨ Key Features
+* **Backend:** Python, Flask, Flask-SocketIO (Eventlet)
+* **Database:** SQLite (`scores.db`)
+* **Frontend:** HTML5, CSS3, Vanilla JavaScript
+* **Deployment Setup:** Ready for Render deployment with `Procfile` and `requirements.txt` included.
 
-* **⚔️ Real-Time 1v1 Multiplayer:** Seamless room creation and synchronization using WebSockets (Flask-SocketIO).
-* **⏱️ Risk vs. Reward Audio Mechanics:** 
-  * 1.5s preview $\rightarrow$ **+15 PTS**
-  * 4.0s preview $\rightarrow$ **+10 PTS**
-  * 8.0s preview $\rightarrow$ **+5 PTS**
-* **🎧 Dynamic Music Catalog:** Real-time fetching of Turkish & Global tracks via the iTunes Search API with artist-term filtering.
-* **🕹️ Retro Arcade Aesthetics:** CRT scanline overlays, reactive audio visualizers, tactile haptic feedback, and synthesized 8-bit sound effects powered by the Web Audio API.
-* **🏆 Global & Solo Leaderboard:** Persistent high-score tracking powered by SQLite.
+## 🚀 Local Setup
 
----
-
-## 🛠️ Tech Stack
-
-* **Backend:** Python, Flask, Flask-SocketIO, Eventlet, Gunicorn, SQLite3
-* **Frontend:** Vanilla JavaScript (ES6+), HTML5, CSS3 (Mobile-First / Pixel-Art)
-* **APIs & Protocols:** iTunes Search API, Web Audio API, WebSockets, Haptic Feedback API
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-* Python 3.9+ installed on your machine.
-
-### Installation
+To run this project locally on your machine, follow these steps:
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/YOUR_USERNAME/GuessTrack.git](https://github.com/YOUR_USERNAME/GuessTrack.git)
+   git clone [https://github.com/jdaklyn/GuessTrack.git](https://github.com/jdaklyn/GuessTrack.git)
    cd GuessTrack
