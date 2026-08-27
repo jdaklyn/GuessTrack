@@ -275,6 +275,10 @@ def on_host_trigger_next(data):
         if 'pass_voters' in ROOMS[room_code]:
             ROOMS[room_code]['pass_voters'].clear()
         
+        # OYUNCU HAZIR DURUMUNU SIFIRLA (Senkronizasyon garantisi için)
+        if 'ready_players' in ROOMS[room_code]:
+            ROOMS[room_code]['ready_players'].clear()
+        
         idx = ROOMS[room_code]['current_idx']
         total = len(ROOMS[room_code]['playlist'])
         if idx >= total:

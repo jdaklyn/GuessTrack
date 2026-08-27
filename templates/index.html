@@ -572,7 +572,7 @@
             <input type="text" class="pixel-input" id="guessInput" placeholder="GUESS TRACK..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter') submitGuess()">
             
             <div class="keypad">
-                <button class="p-btn btn-pass" id="passBtn" onclick="passSong()">⏭ PASS</button>
+                <button class="p-btn btn-pass" id="passBtn" onclick="passSong()">>> PASS</button>
                 <button class="p-btn btn-time" id="timeBtn" onclick="getTimeExtension()">⏱ +TIME (+4s)</button>
                 <button class="p-btn btn-hint" id="hintBtn" onclick="getLetterHint()">💡 HINT (5)</button>
                 <button class="p-btn btn-guess" onclick="submitGuess()">✔ GUESS</button>
@@ -979,11 +979,11 @@
                 if (gameMode === "MULTI") {
                     if (!hasVotedPass) {
                         passBtn.className = "p-btn btn-pass";
-                        passBtn.innerText = "⏭ PASS";
+                        passBtn.innerText = ">> PASS";
                     }
                 } else {
                     passBtn.className = "p-btn btn-pass";
-                    passBtn.innerText = "⏭ PASS";
+                    passBtn.innerText = ">> PASS";
                 }
             }
         }
@@ -1048,7 +1048,9 @@
 
             audio.addEventListener('canplaythrough', proceed);
             audio.addEventListener('loadeddata', proceed);
-            preloadTimeout = setTimeout(proceed, 4000); 
+            // SENKRON KORUMASI: Yavaş interneti olan oyuncuların da şarkıyı tamamen yüklemesini
+            // beklemek için bu süreyi 15 saniyeye çıkardık. Herkes tam yüklemeden oyun başlamaz.
+            preloadTimeout = setTimeout(proceed, 15000); 
             audio.load();
         }
 
@@ -1261,7 +1263,7 @@
             const msg = document.getElementById("screenMsg");
             if (msg) {
                 msg.style.color = "#d8cbb5";
-                msg.innerText = "⏭️ BOTH PASSED! (0 PTS)";
+                msg.innerText = ">> BOTH PASSED! (0 PTS)";
             }
             revealTitle();
         });
@@ -1391,7 +1393,7 @@
             const passBtn = document.getElementById("passBtn");
             if (passBtn) {
                 passBtn.classList.remove("voted-pass");
-                passBtn.innerText = "⏭ PASS";
+                passBtn.innerText = ">> PASS";
             }
             
             renderMysteryMask();
@@ -1570,7 +1572,7 @@
             const msg = document.getElementById("screenMsg");
             if (msg) {
                 msg.style.color = "#d8cbb5";
-                msg.innerText = "⏭️ PASSED! (0 PTS)";
+                msg.innerText = ">> PASSED! (0 PTS)";
             }
             revealTitle();
             setTimeout(nextSongSolo, 1500);
