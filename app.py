@@ -34,15 +34,13 @@ TR_HITS = [
     "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat",
     "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", 
     "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model",
-    "Tarkan", "Sertab Erener", "Kenan Dogulu", "Mirkelam", "Levent Yuksel", 
-    "Deniz Seki", "Nazan Öncel", "Göksel"
+    "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel","Nazan Öncel", "Göksel"
 ]
 
 EN_HITS = [
-    "Nirvana", "Green Day", "Linkin Park", "Jeff Buckley", "The Offspring", 
-    "Elvis Presley", "Red Hot Chili Peppers", "Foo Fighters", "Queen", 
+    "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "AC/DC", "Metallica",
     "Bon Jovi", "Marilyn Manson", "The Cranberries", "Metallica", "Tamino",
-    "Britney Spears", "Backstreet Boys", "Michael Jackson", "Rihanna", "Madonna"
+    "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Calvin Harris", "Modern Talking"
 ]
 
 # Türkçe modunda çalması istenmeyen İngilizce/Eurovision şarkılarının kara listesi
