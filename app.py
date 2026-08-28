@@ -1,8 +1,8 @@
 import os
 import random
 import string
-import sqlite3
 import requests
+import psycopg2
 from flask import Flask, render_template, request, jsonify, Response
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
@@ -10,22 +10,31 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'guesstrack_super_secret_key'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
-DB_NAME = 'scores.db'
+# NEON POSTGRESQL BAĞLANTIMIZ
+DATABASE_URL = "postgresql://neondb_owner:npg_OBYk9ldQ0gGs@ep-young-resonance-b1d61v24-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL)
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS leaderboard (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            player_name TEXT NOT NULL,
-            score INTEGER NOT NULL,
-            lang_mode TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # PostgreSQL'de AUTOINCREMENT yerine SERIAL kullanılır
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS leaderboard (
+                id SERIAL PRIMARY KEY,
+                player_name TEXT NOT NULL,
+                score INTEGER NOT NULL,
+                lang_mode TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print("Veritabani baglanti hatasi:", e)
 
 init_db()
 
@@ -34,11 +43,11 @@ TR_HITS = [
     "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat",
     "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", 
     "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model",
-    "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel","Nazan Öncel", "Göksel"
+    "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani"
 ]
 
 EN_HITS = [
-    "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "AC/DC", "Metallica",
+    "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "Metallica",
     "Bon Jovi", "Marilyn Manson", "The Cranberries", "Tamino",
     "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Calvin Harris", "Modern Talking"
 ]
@@ -122,19 +131,22 @@ def save_score():
     score = data.get('score', 0)
     lang_mode = data.get('lang_mode', 'TR')
     
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO leaderboard (player_name, score, lang_mode) VALUES (?, ?, ?)", (player_name, score, lang_mode))
+    # PostgreSQL'de soru işareti (?) yerine %s kullanılır
+    cursor.execute("INSERT INTO leaderboard (player_name, score, lang_mode) VALUES (%s, %s, %s)", (player_name, score, lang_mode))
     conn.commit()
+    cursor.close()
     conn.close()
     return jsonify({"status": "ok"})
 
 @app.route('/api/top-scores')
 def top_scores():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT player_name, score, lang_mode FROM leaderboard ORDER BY score DESC LIMIT 10")
     rows = cursor.fetchall()
+    cursor.close()
     conn.close()
     return jsonify([{"player_name": r[0], "score": r[1], "lang_mode": r[2]} for r in rows])
 
@@ -275,7 +287,6 @@ def on_host_trigger_next(data):
         if 'pass_voters' in ROOMS[room_code]:
             ROOMS[room_code]['pass_voters'].clear()
         
-        # OYUNCU HAZIR DURUMUNU SIFIRLA (Senkronizasyon garantisi için)
         if 'ready_players' in ROOMS[room_code]:
             ROOMS[room_code]['ready_players'].clear()
         
