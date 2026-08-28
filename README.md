@@ -1,7 +1,7 @@
 # 🎵 GuessTrack
 
 <p align="center">
-  <img src="img/1.png" width="30%">
+  <img src="img/1.png" width="30%">s
   <img src="img/2.png" width="30%">
   <img src="img/3.png" width="30%">
 </p>
@@ -13,14 +13,15 @@ GuessTrack is a real-time, retro-arcade style music guessing game. Test your mus
 * **Solo & 1v1 Multiplayer Modes:** Features a local solo progression system and a live multiplayer mode utilizing WebSockets for real-time room creation and competitive duels.
 * **Retro Arcade UI:** Designed with a custom pixel-art aesthetic, featuring CRT screen effects, animated visualizers, and interactive haptic feedback.
 * **Music API Integration:** Dynamically fetches audio previews across different languages (English/Turkish) using exact-match filtering for accuracy.
-* **Live Leaderboard:** Integrated SQLite database to track, save, and display the top-scoring players seamlessly.
+* **Live Leaderboard:** Integrated PostgreSQL database to track, save, and display the top-scoring players seamlessly.
 
 ## 🛠️ Tech Stack & Structure
 
 * **Backend:** Python, Flask, Flask-SocketIO (Eventlet)
-* **Database:** SQLite (`scores.db`)
+* **Database:** PostgreSQL (Neon Serverless)
 * **Frontend:** HTML5, CSS3, Vanilla JavaScript
 * **Deployment Setup:** Ready for Render deployment with `Procfile` and `requirements.txt` included.
+
 
 ## 🚀 Local Setup
 
