@@ -42,7 +42,7 @@ TR_HITS = [
     "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin",
     "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat", "Skapova", "Dedublüman", 
     "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", "Seksendört",
-    "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model", "Hayko Cepkin", "Büyük Ev Ablukada",
+    "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model", "Hayko Cepkin",
     "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani"
 ]
 
