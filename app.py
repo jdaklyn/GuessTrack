@@ -5,13 +5,18 @@ import requests
 import psycopg2
 from flask import Flask, render_template, request, jsonify, Response
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from dotenv import load_dotenv 
+
+
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'guesstrack_super_secret_key'
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
-# NEON POSTGRESQL BAĞLANTIMIZ
-DATABASE_URL = "postgresql://neondb_owner:npg_OBYk9ldQ0gGs@ep-young-resonance-b1d61v24-pooler.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+ 
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
@@ -20,7 +25,7 @@ def init_db():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # PostgreSQL'de AUTOINCREMENT yerine SERIAL kullanılır
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS leaderboard (
                 id SERIAL PRIMARY KEY,

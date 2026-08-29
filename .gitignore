@@ -17,3 +17,5 @@ scores.db
 Thumbs.db
 .vscode/
 .idea/
+.env
+__pycache__/
