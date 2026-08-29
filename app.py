@@ -39,22 +39,22 @@ def init_db():
 init_db()
 
 TR_HITS = [
-    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman",
-    "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat",
-    "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", 
-    "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model",
+    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin",
+    "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat", "Skapova", "Dedublüman", 
+    "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", "Seksendört",
+    "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model", "Hayko Cepkin", "Büyük Ev Ablukada",
     "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani"
 ]
 
 EN_HITS = [
-    "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "Metallica",
-    "Bon Jovi", "Marilyn Manson", "The Cranberries", "Tamino",
-    "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Calvin Harris", "Modern Talking"
+    "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "Metallica", "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", 
+    "Bon Jovi", "Marilyn Manson", "The Cranberries", "Tamino", "One Direction", "Lana Del Rey", "Katy Perry", "The Weeknd", "Arctic Monkeys", "Backstreet Boys", "Bruno Mars", 
+    "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Modern Talking", "Twenty One Pilots", "Joji", "Imagine Dragons", "Radiohead", "Sting", "Pitbull", "Daft Punk" 
 ]
 
 EXCLUDED_TR_TITLES = [
     "love me back", "we could be the same", "everyway that i can", 
-    "for real", "shake it up", "dum tek tek", "always", "feel your love"
+    "for real", "shake it up", "always", "feel your love"
 ]
 
 def fetch_itunes_tracks(artist_list, limit=5):
