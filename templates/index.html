@@ -626,7 +626,6 @@
             return audioCtx;
         }
 
-        // Global Ses Kilidi Açıcı
         window.addEventListener('pointerdown', () => {
             getAudioContext();
         }, { once: true });
@@ -904,26 +903,40 @@
                     .replace(/[^a-z0-9]/g, '');
         }
 
+        /* YENİ FİLTRELEME: Kelimeleri gruplar ve flex-wrap ile alt satıra indirir */
         function renderMysteryMask() {
             if (!playlist[currentSongIndex]) return;
             const songNameOnly = playlist[currentSongIndex].title.toUpperCase();
-            let masked = "";
             const letterRegex = /[A-Z0-9ÇĞİÖŞÜ]/i;
+
+            // Kelimeleri bir bütün olarak tutacak inline-flex konteyner
+            let htmlOutput = `<span style="display: inline-flex; flex-wrap: wrap; justify-content: center; row-gap: 8px; column-gap: 24px; width: 100%;">`;
+            let currentWord = "";
 
             for (let i = 0; i < songNameOnly.length; i++) {
                 const char = songNameOnly[i];
+                
                 if (char === ' ') {
-                    masked += "  ";
+                    if (currentWord) {
+                        htmlOutput += `<span style="white-space: nowrap;">${currentWord.trim()}</span>`;
+                        currentWord = "";
+                    }
                 } else if (revealedLetters.includes(i) || !letterRegex.test(char)) {
-                    masked += char + " ";
+                    currentWord += char + " ";
                 } else {
-                    masked += "_ ";
+                    currentWord += "_ ";
                 }
             }
 
+            // Son kelimeyi ekle
+            if (currentWord) {
+                htmlOutput += `<span style="white-space: nowrap;">${currentWord.trim()}</span>`;
+            }
+            htmlOutput += `</span>`;
+
             const display = document.getElementById("songDisplay");
             if (display) {
-                display.innerText = masked.trim();
+                display.innerHTML = htmlOutput;
                 display.className = "song-title mystery-title";
             }
         }
@@ -1048,8 +1061,6 @@
 
             audio.addEventListener('canplaythrough', proceed);
             audio.addEventListener('loadeddata', proceed);
-            // SENKRON KORUMASI: Yavaş interneti olan oyuncuların da şarkıyı tamamen yüklemesini
-            // beklemek için bu süreyi 15 saniyeye çıkardık. Herkes tam yüklemeden oyun başlamaz.
             preloadTimeout = setTimeout(proceed, 15000); 
             audio.load();
         }
