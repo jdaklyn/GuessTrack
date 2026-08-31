@@ -611,7 +611,6 @@
         let timerStartedForThisTrack = false;
         
         let currentTimerStartTime = 0;
-        // HAYALET SAYAÇLARI ENGELLEMEK İÇİN GLOBAL DEĞİŞKEN
         let countdownInterval = null;
 
         let audio = new Audio();
@@ -1242,7 +1241,6 @@
             startVisualCountdownMulti();
         });
 
-        // HAYALET SAYAÇLARI TEMİZLEYEN FONKSİYON
         function handleMultiRoundEnd() {
             isLocked = true;
             stopGuessTimer();
@@ -1281,6 +1279,13 @@
                 msg.innerText = ">> BOTH PASSED! (0 PTS)";
             }
             revealTitle();
+            
+            // HOST'UN TARAYICISI 2 SANİYE BEKLEYİP BİLDİRİYOR (Sorunun Çözüldüğü Yer)
+            if (isHost) {
+                setTimeout(() => {
+                    socket.emit('host_trigger_next', { room_code: currentRoomCode });
+                }, 2000);
+            }
         });
 
         socket.on('round_winner', (data) => {
@@ -1312,6 +1317,13 @@
 
             revealTitle();
             updateUI();
+            
+            // HOST'UN TARAYICISI 2 SANİYE BEKLEYİP BİLDİRİYOR (Sorunun Çözüldüğü Yer)
+            if (isHost) {
+                setTimeout(() => {
+                    socket.emit('host_trigger_next', { room_code: currentRoomCode });
+                }, 2000);
+            }
         });
 
         socket.on('round_timeout_broadcast', () => {
@@ -1325,6 +1337,13 @@
             }
             revealTitle();
             updateUI();
+            
+            // HOST'UN TARAYICISI 2 SANİYE BEKLEYİP BİLDİRİYOR (Sorunun Çözüldüğü Yer)
+            if (isHost) {
+                setTimeout(() => {
+                    socket.emit('host_trigger_next', { room_code: currentRoomCode });
+                }, 2000);
+            }
         });
 
         socket.on('next_round_sync', (data) => {

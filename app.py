@@ -44,16 +44,16 @@ init_db()
 
 TR_HITS = [
     "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin", "MFO", "Onur Ozdemir",
-    "Sakin", "Vega", "Athena", "Dedublüman","Can Bonomo", "emre aydin",      
-    "Model", "Hayko Cepkin", "Tarkan", "Sertab Erener", "Kenan Dogulu", "Ozlem Tekin",
+    "Sakin", "Vega", "Athena", "Dedublüman","Can Bonomo", "emre aydin" ,      
+    "Model", "Hayko Cepkin", "Tarkan", "Sertab Erener", "Kenan Dogulu", "Ozlem Tekin" ,
     "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani", "Baris Manco", "Cem Karaca", "Cilekes", "Redd" 
 ]
 
 EN_HITS = [
-    "Nirvana", "Jeff Buckley", "Red Hot Chili Peppers", "Queen", "David Guetta", "Lady Gaga", "Metallica", "Michael Jackson",
-    "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", "Bon Jovi", "Marilyn Manson", "Britney Spears", "Pink Floyd",
-    "One Direction", "Lana Del Rey", "Arctic Monkeys", "Bruno Mars", "Rihanna", "Flo Rida",  
-    "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Daft Punk", "Scorpions" 
+    "Nirvana", "Jeff Buckley" , "Red Hot Chili Peppers" , "Queen" , "David Guetta" , "Lady Gaga" , "Metallica" , "Michael Jackson" ,
+    "Eminem" , "Kanye West", "Timbaland" , "Black Eyed Peas" , "Bon Jovi" , "Marilyn Manson" , "Britney Spears" , "Pink Floyd" ,
+    "One Direction" , "Lana Del Rey" , "Arctic Monkeys" , "Bruno Mars" , "Rihanna" , "Flo Rida",  
+    "Madonna", "Modern Talking" , "Twenty One Pilots" , "Radiohead" , "Sting" , "Daft Punk" , "Scorpions" 
 ]
 
 EXCLUDED_TR_TITLES = [
@@ -62,10 +62,10 @@ EXCLUDED_TR_TITLES = [
 ]
 
 EXCLUDED_EN_TITLES = [
-    "remix", "live", "karaoke", "instrumental", "cover", "spanish version", "acoustic", "girl like me"
+    "remix", "live", "karaoke", "instrumental", "cover", "spanish version", "acoustic" , "girl like me"
 ]
 
-def fetch_itunes_tracks(artist_list, limit=5):
+def fetch_itunes_tracks(artist_list, limit=15):
     tracks = []
     shuffled_artists = random.sample(artist_list, len(artist_list))
     for artist in shuffled_artists:
@@ -166,34 +166,28 @@ ROOMS = {}
 def generate_room_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
-# DONMAYI ÇÖZEN NATIVE SOCKETIO GÖREVİ (Senkronizasyon İçin)
-def server_advance_round(room_code, expected_idx):
-    socketio.sleep(2.0) # Render'ın arka planı öldürmesini engeller
-    
-    if room_code not in ROOMS:
-        return
-    room = ROOMS[room_code]
-    
-    if room.get('current_idx') != expected_idx:
-        return
+# Sunucu arka planında beklemeyi tamamen iptal ettik.
+# Yeni tura geçme görevini tamamen Host'un tarayıcısına bıraktık.
+@socketio.on('host_trigger_next')
+def on_host_trigger_next(data):
+    room_code = data.get('room_code')
+    if room_code in ROOMS:
+        room = ROOMS[room_code]
+        room['current_idx'] += 1
+        room['round_locked'] = False
         
-    room['current_idx'] += 1
-    room['round_locked'] = False
-    
-    if 'pass_voters' in room:
-        room['pass_voters'].clear()
-    
-    if 'ready_players' in room:
-        room['ready_players'].clear()
-    
-    idx = room['current_idx']
-    total = len(room['playlist'])
-    
-    if idx >= total:
-        socketio.emit('game_over_sync', {'players': room['players']}, room=room_code)
-    else:
-        socketio.emit('next_round_sync', {'track_index': idx}, room=room_code)
-
+        if 'pass_voters' in room:
+            room['pass_voters'].clear()
+        if 'ready_players' in room:
+            room['ready_players'].clear()
+            
+        idx = room['current_idx']
+        total = len(room['playlist'])
+        
+        if idx >= total:
+            socketio.emit('game_over_sync', {'players': room['players']}, room=room_code)
+        else:
+            socketio.emit('next_round_sync', {'track_index': idx}, room=room_code)
 
 @socketio.on('create_room')
 def on_create_room(data):
@@ -231,7 +225,6 @@ def on_join_room(data):
     ROOMS[room_code]['players'].append({ 'id': request.sid, 'name': player_name, 'score': 0, 'is_host': False })
     join_room(room_code)
     emit('joined_successfully', {'room_code': room_code, 'lang_mode': ROOMS[room_code]['lang_mode']}, room=request.sid)
-    # Global socketio.emit ile "GET READY" hatası engelleniyor
     socketio.emit('player_list_update', {'players': ROOMS[room_code]['players']}, room=room_code)
 
 @socketio.on('start_multiplayer_game')
@@ -281,9 +274,6 @@ def on_correct_guess(data):
                     'players': room['players']
                 }, room=room_code)
                 break
-                
-        expected_idx = room['current_idx']
-        socketio.start_background_task(server_advance_round, room_code, expected_idx)
 
 @socketio.on('vote_pass_sync')
 def on_vote_pass(data):
@@ -311,9 +301,6 @@ def on_vote_pass(data):
             room['round_locked'] = True
             room['pass_voters'].clear()
             socketio.emit('both_passed_next', {}, room=room_code)
-            
-            expected_idx = room['current_idx']
-            socketio.start_background_task(server_advance_round, room_code, expected_idx)
 
 @socketio.on('timeout_sync')
 def on_timeout_sync(data):
@@ -325,9 +312,6 @@ def on_timeout_sync(data):
             if 'pass_voters' in room:
                 room['pass_voters'].clear()
             socketio.emit('round_timeout_broadcast', {}, room=room_code)
-            
-            expected_idx = room['current_idx']
-            socketio.start_background_task(server_advance_round, room_code, expected_idx)
 
 @socketio.on('disconnect')
 def on_disconnect():
