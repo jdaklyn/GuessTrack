@@ -43,17 +43,17 @@ def init_db():
 init_db()
 
 TR_HITS = [
-    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin", "MFO", "Onur Ozdemir"
-    "Sakin", "Vega", "Athena", "Dedublüman","Can Bonomo", "emre aydin" ,      
-    "Model", "Hayko Cepkin", "Tarkan", "Sertab Erener", "Kenan Dogulu", "Ozlem Tekin" ,
-    "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani" "Baris Manco", "Cem Karaca", "Cilekes", "Redd",  
+    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin", "MFO", "Onur Ozdemir",
+    "Sakin", "Vega", "Athena", "Dedublüman","Can Bonomo", "emre aydin",      
+    "Model", "Hayko Cepkin", "Tarkan", "Sertab Erener", "Kenan Dogulu", "Ozlem Tekin",
+    "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani", "Baris Manco", "Cem Karaca", "Cilekes", "Redd" 
 ]
 
 EN_HITS = [
-    "Nirvana", "Jeff Buckley" , "Red Hot Chili Peppers" , "Queen" , "David Guetta" , "Lady Gaga" , "Metallica" , "Michael Jackson" ,
-    "Eminem" , "Kanye West", "Timbaland" , "Black Eyed Peas" , "Bon Jovi" , "Marilyn Manson" , "Britney Spears" , "Pink Floyd" ,
-    "One Direction" , "Lana Del Rey" , "Arctic Monkeys" , "Bruno Mars" , "Rihanna" , "Flo Rida"  
-    "Madonna", "Modern Talking" , "Twenty One Pilots" , "Radiohead" , "Sting" , "Daft Punk" , "Scorpions" 
+    "Nirvana", "Jeff Buckley", "Red Hot Chili Peppers", "Queen", "David Guetta", "Lady Gaga", "Metallica", "Michael Jackson",
+    "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", "Bon Jovi", "Marilyn Manson", "Britney Spears", "Pink Floyd",
+    "One Direction", "Lana Del Rey", "Arctic Monkeys", "Bruno Mars", "Rihanna", "Flo Rida",  
+    "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Daft Punk", "Scorpions" 
 ]
 
 EXCLUDED_TR_TITLES = [
@@ -62,7 +62,7 @@ EXCLUDED_TR_TITLES = [
 ]
 
 EXCLUDED_EN_TITLES = [
-    "remix", "live", "karaoke", "instrumental", "cover", "spanish version", "acoustic" , "girl like me"
+    "remix", "live", "karaoke", "instrumental", "cover", "spanish version", "acoustic", "girl like me"
 ]
 
 def fetch_itunes_tracks(artist_list, limit=5):
@@ -80,18 +80,18 @@ def fetch_itunes_tracks(artist_list, limit=5):
             results = []
             for r in res.get('results', []):
                 if r.get('previewUrl') and r.get('trackName'):
-                   raw_name_test = r['trackName'].lower()
+                    raw_name_test = r['trackName'].lower()
        
-                if is_tr and any(ex in raw_name_test for ex in EXCLUDED_TR_TITLES):
+                    if is_tr and any(ex in raw_name_test for ex in EXCLUDED_TR_TITLES):
                         continue
                  
-                if not is_tr and any(ex in raw_name_test for ex in EXCLUDED_EN_TITLES):
+                    if not is_tr and any(ex in raw_name_test for ex in EXCLUDED_EN_TITLES):
                         continue
                         
-                art_clean = artist.lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
-                res_art_clean = r.get('artistName', '').lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
+                    art_clean = artist.lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
+                    res_art_clean = r.get('artistName', '').lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
                     
-                if art_clean == res_art_clean:
+                    if art_clean == res_art_clean:
                         results.append(r)
             
             if results:
@@ -166,11 +166,17 @@ ROOMS = {}
 def generate_room_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
-# SUNUCU TABANLI TUR GEÇİŞ FONKSİYONU (SENKRONİZASYON İÇİN)
-def server_advance_round(room_code):
+# DONMAYI ÇÖZEN NATIVE SOCKETIO GÖREVİ (Senkronizasyon İçin)
+def server_advance_round(room_code, expected_idx):
+    socketio.sleep(2.0) # Render'ın arka planı öldürmesini engeller
+    
     if room_code not in ROOMS:
         return
     room = ROOMS[room_code]
+    
+    if room.get('current_idx') != expected_idx:
+        return
+        
     room['current_idx'] += 1
     room['round_locked'] = False
     
@@ -225,7 +231,8 @@ def on_join_room(data):
     ROOMS[room_code]['players'].append({ 'id': request.sid, 'name': player_name, 'score': 0, 'is_host': False })
     join_room(room_code)
     emit('joined_successfully', {'room_code': room_code, 'lang_mode': ROOMS[room_code]['lang_mode']}, room=request.sid)
-    emit('player_list_update', {'players': ROOMS[room_code]['players']}, room=room_code)
+    # Global socketio.emit ile "GET READY" hatası engelleniyor
+    socketio.emit('player_list_update', {'players': ROOMS[room_code]['players']}, room=room_code)
 
 @socketio.on('start_multiplayer_game')
 def on_start_game(data):
@@ -239,7 +246,7 @@ def on_start_game(data):
         ROOMS[room_code]['pass_voters'] = set()
         ROOMS[room_code]['ready_players'] = set()
         ROOMS[room_code]['round_locked'] = False
-        emit('game_started', {'playlist': tracks, 'players': ROOMS[room_code]['players']}, room=room_code)
+        socketio.emit('game_started', {'playlist': tracks, 'players': ROOMS[room_code]['players']}, room=room_code)
 
 @socketio.on('track_loaded')
 def on_track_loaded(data):
@@ -250,7 +257,7 @@ def on_track_loaded(data):
         
         if len(room['ready_players']) >= len(room['players']):
             room['ready_players'].clear()
-            emit('all_players_ready', {}, room=room_code)
+            socketio.emit('all_players_ready', {}, room=room_code)
 
 @socketio.on('correct_guess_sync')
 def on_correct_guess(data):
@@ -261,21 +268,22 @@ def on_correct_guess(data):
         if room.get('round_locked', False):
             return
         room['round_locked'] = True
+        
         if 'pass_voters' in room:
             room['pass_voters'].clear()
             
         for p in room['players']:
             if p['id'] == request.sid:
                 p['score'] += pts
-                emit('round_winner', {
+                socketio.emit('round_winner', {
                     'winner_name': p['name'],
                     'points_earned': pts,
                     'players': room['players']
                 }, room=room_code)
                 break
                 
-        # Sunucu tabanlı senkronize geçiş (2 saniye sonra otomatik atlatır)
-        eventlet.spawn_after(2.0, server_advance_round, room_code)
+        expected_idx = room['current_idx']
+        socketio.start_background_task(server_advance_round, room_code, expected_idx)
 
 @socketio.on('vote_pass_sync')
 def on_vote_pass(data):
@@ -293,7 +301,7 @@ def on_vote_pass(data):
         pass_count = len(room['pass_voters'])
         total_players = len(room['players'])
         
-        emit('pass_voted_update', {
+        socketio.emit('pass_voted_update', {
             'voter_name': player_name,
             'pass_count': pass_count,
             'total_players': total_players
@@ -302,10 +310,10 @@ def on_vote_pass(data):
         if pass_count >= total_players and total_players > 0:
             room['round_locked'] = True
             room['pass_voters'].clear()
-            emit('both_passed_next', {}, room=room_code)
+            socketio.emit('both_passed_next', {}, room=room_code)
             
-            # Sunucu tabanlı senkronize geçiş
-            eventlet.spawn_after(2.0, server_advance_round, room_code)
+            expected_idx = room['current_idx']
+            socketio.start_background_task(server_advance_round, room_code, expected_idx)
 
 @socketio.on('timeout_sync')
 def on_timeout_sync(data):
@@ -316,17 +324,17 @@ def on_timeout_sync(data):
             room['round_locked'] = True
             if 'pass_voters' in room:
                 room['pass_voters'].clear()
-            emit('round_timeout_broadcast', {}, room=room_code)
+            socketio.emit('round_timeout_broadcast', {}, room=room_code)
             
-            # Sunucu tabanlı senkronize geçiş
-            eventlet.spawn_after(2.0, server_advance_round, room_code)
+            expected_idx = room['current_idx']
+            socketio.start_background_task(server_advance_round, room_code, expected_idx)
 
 @socketio.on('disconnect')
 def on_disconnect():
     for code, room in list(ROOMS.items()):
         for p in room['players']:
             if p['id'] == request.sid:
-                emit('opponent_left', {'msg': f"{p['name']} left the room."}, room=code)
+                socketio.emit('opponent_left', {'msg': f"{p['name']} left the room."}, room=code)
                 del ROOMS[code]
                 break
 
