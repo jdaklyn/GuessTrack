@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, Response
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from dotenv import load_dotenv 
 
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -14,6 +15,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
+ 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
@@ -136,6 +138,7 @@ def save_score():
     
     conn = get_db_connection()
     cursor = conn.cursor()
+    # PostgreSQL'de soru işareti (?) yerine %s kullanılır
     cursor.execute("INSERT INTO leaderboard (player_name, score, lang_mode) VALUES (%s, %s, %s)", (player_name, score, lang_mode))
     conn.commit()
     cursor.close()
