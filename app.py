@@ -44,17 +44,13 @@ def init_db():
 init_db()
 
 TR_HITS = [
-    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin",
-    "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat", "Skapova", "Dedublüman", 
-    "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", "Seksendört",
-    "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model", "Hayko Cepkin",
-    "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani"
+    "Duman", "Mor ve Otesi", "Vega", 
+    
 ]
 
 EN_HITS = [
-    "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "Metallica", "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", 
-    "Bon Jovi", "Marilyn Manson", "The Cranberries", "Tamino", "One Direction", "Lana Del Rey", "Katy Perry", "The Weeknd", "Arctic Monkeys", "Backstreet Boys", "Bruno Mars", 
-    "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Modern Talking", "Twenty One Pilots", "Joji", "Imagine Dragons", "Radiohead", "Sting", "Pitbull", "Daft Punk" 
+    "Nirvana","Jeff Buckley", "Bon Jovi", "Michael Jackson", "Modern Talking" , "Radiohead" 
+
 ]
 
 EXCLUDED_TR_TITLES = [
