@@ -44,7 +44,7 @@ init_db()
 
 TR_HITS = [
     "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin", "MFO", "Onur Ozdemir"
-    "Sakin", "Vega", "Kurban", "Athena", "Dedublüman","Can Bonomo", "emre aydin" ,      
+    "Sakin", "Vega", "Athena", "Dedublüman","Can Bonomo", "emre aydin" ,      
     "Model", "Hayko Cepkin", "Tarkan", "Sertab Erener", "Kenan Dogulu", "Ozlem Tekin" ,
     "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani" "Baris Manco", "Cem Karaca", "Cilekes", "Redd",  
 ]
@@ -52,7 +52,7 @@ TR_HITS = [
 EN_HITS = [
     "Nirvana", "Jeff Buckley" , "Red Hot Chili Peppers" , "Queen" , "David Guetta" , "Lady Gaga" , "Metallica" , "Michael Jackson" ,
     "Eminem" , "Kanye West", "Timbaland" , "Black Eyed Peas" , "Bon Jovi" , "Marilyn Manson" , "Britney Spears" , "Pink Floyd" ,
-    "One Direction" , "Lana Del Rey" , "Katy Perry" , "Arctic Monkeys" , "Bruno Mars" , "Rihanna" , "Flo Rida"  
+    "One Direction" , "Lana Del Rey" , "Arctic Monkeys" , "Bruno Mars" , "Rihanna" , "Flo Rida"  
     "Madonna", "Modern Talking" , "Twenty One Pilots" , "Radiohead" , "Sting" , "Daft Punk" , "Scorpions" 
 ]
 
