@@ -3,10 +3,10 @@ import random
 import string
 import requests
 import psycopg2
+import eventlet
 from flask import Flask, render_template, request, jsonify, Response
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from dotenv import load_dotenv 
-
 
 load_dotenv()
 
@@ -15,7 +15,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
- 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
@@ -138,7 +137,6 @@ def save_score():
     
     conn = get_db_connection()
     cursor = conn.cursor()
-    # PostgreSQL'de soru işareti (?) yerine %s kullanılır
     cursor.execute("INSERT INTO leaderboard (player_name, score, lang_mode) VALUES (%s, %s, %s)", (player_name, score, lang_mode))
     conn.commit()
     cursor.close()
@@ -159,6 +157,29 @@ ROOMS = {}
 
 def generate_room_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+
+# SUNUCU TABANLI TUR GEÇİŞ FONKSİYONU (SENKRONİZASYON İÇİN)
+def server_advance_round(room_code):
+    if room_code not in ROOMS:
+        return
+    room = ROOMS[room_code]
+    room['current_idx'] += 1
+    room['round_locked'] = False
+    
+    if 'pass_voters' in room:
+        room['pass_voters'].clear()
+    
+    if 'ready_players' in room:
+        room['ready_players'].clear()
+    
+    idx = room['current_idx']
+    total = len(room['playlist'])
+    
+    if idx >= total:
+        socketio.emit('game_over_sync', {'players': room['players']}, room=room_code)
+    else:
+        socketio.emit('next_round_sync', {'track_index': idx}, room=room_code)
+
 
 @socketio.on('create_room')
 def on_create_room(data):
@@ -244,6 +265,9 @@ def on_correct_guess(data):
                     'players': room['players']
                 }, room=room_code)
                 break
+                
+        # Sunucu tabanlı senkronize geçiş (2 saniye sonra otomatik atlatır)
+        eventlet.spawn_after(2.0, server_advance_round, room_code)
 
 @socketio.on('vote_pass_sync')
 def on_vote_pass(data):
@@ -271,6 +295,9 @@ def on_vote_pass(data):
             room['round_locked'] = True
             room['pass_voters'].clear()
             emit('both_passed_next', {}, room=room_code)
+            
+            # Sunucu tabanlı senkronize geçiş
+            eventlet.spawn_after(2.0, server_advance_round, room_code)
 
 @socketio.on('timeout_sync')
 def on_timeout_sync(data):
@@ -282,25 +309,9 @@ def on_timeout_sync(data):
             if 'pass_voters' in room:
                 room['pass_voters'].clear()
             emit('round_timeout_broadcast', {}, room=room_code)
-
-@socketio.on('host_trigger_next')
-def on_host_trigger_next(data):
-    room_code = data.get('room_code')
-    if room_code in ROOMS:
-        ROOMS[room_code]['current_idx'] += 1
-        ROOMS[room_code]['round_locked'] = False
-        if 'pass_voters' in ROOMS[room_code]:
-            ROOMS[room_code]['pass_voters'].clear()
-        
-        if 'ready_players' in ROOMS[room_code]:
-            ROOMS[room_code]['ready_players'].clear()
-        
-        idx = ROOMS[room_code]['current_idx']
-        total = len(ROOMS[room_code]['playlist'])
-        if idx >= total:
-            emit('game_over_sync', {'players': ROOMS[room_code]['players']}, room=room_code)
-        else:
-            emit('next_round_sync', {'track_index': idx}, room=room_code)
+            
+            # Sunucu tabanlı senkronize geçiş
+            eventlet.spawn_after(2.0, server_advance_round, room_code)
 
 @socketio.on('disconnect')
 def on_disconnect():

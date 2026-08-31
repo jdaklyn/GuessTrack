@@ -609,6 +609,9 @@
         let preloadTimeout = null;
         let timeLeft = 20.0;
         let timerStartedForThisTrack = false;
+        
+        // SENKRONİZASYON İÇİN EKLENEN GLOBAL DEĞİŞKEN (Mutlak Zaman)
+        let currentTimerStartTime = 0;
 
         let audio = new Audio();
         audio.preload = "auto";
@@ -900,20 +903,20 @@
             s = s.split('-')[0].split('feat')[0].split('ft.')[0].trim();
             return s.replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
                     .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                    .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
                     .replace(/[^a-z0-9]/g, '');
         }
 
         function renderMysteryMask() {
             if (!playlist[currentSongIndex]) return;
             const songNameOnly = playlist[currentSongIndex].title.toUpperCase();
-            const letterRegex = /[A-Z0-9ÇĞİÖŞÜ]/i;
+            const letterRegex = /[A-Z0-9ÇĞİÖŞÜÂÎÛ]/i;
 
             let htmlOutput = `<span style="display: inline-flex; flex-wrap: wrap; justify-content: center; row-gap: 8px; column-gap: 24px; width: 100%;">`;
             let currentWord = "";
 
             for (let i = 0; i < songNameOnly.length; i++) {
                 const char = songNameOnly[i];
-                
                 if (char === ' ') {
                     if (currentWord) {
                         htmlOutput += `<span style="white-space: nowrap;">${currentWord.trim()}</span>`;
@@ -1206,7 +1209,7 @@
             if (errorEl) {
                 errorEl.innerText = "❌ " + data.msg;
                 
-                if (roomInput && data.msg.toLowerCase().includes("room") || data.msg.toLowerCase().includes("username")) {
+                if (roomInput && (data.msg.toLowerCase().includes("room") || data.msg.toLowerCase().includes("username"))) {
                     roomInput.classList.add("input-error");
                     setTimeout(() => roomInput.classList.remove("input-error"), 350);
                 }
@@ -1243,12 +1246,8 @@
             stopGuessTimer();
             stopAudioOnly();
             hasVotedPass = false;
-
-            if (isHost) {
-                setTimeout(() => {
-                    socket.emit('host_trigger_next', { room_code: currentRoomCode });
-                }, 2000);
-            }
+            // DÜZELTME: Host tarafındaki tehlikeli (gecikmeye açık) setTimeout kaldırıldı.
+            // Artık turun değişip değişmediğine doğrudan sunucu (app.py) 2 sn içinde karar verecek.
         }
 
         socket.on('pass_voted_update', (data) => {
@@ -1433,6 +1432,7 @@
             playAudioUntil(addedDurations[0]);
         }
 
+        // DÜZELTME: Mutlak (Absolute) Zamana Dayalı Süre Sayımı
         function start20SecTimer() {
             if (timerStartedForThisTrack) return;
             timerStartedForThisTrack = true;
@@ -1441,9 +1441,13 @@
             const timerLabel = document.getElementById("guessTimerLabel");
             const fill = document.getElementById("timerFill");
 
+            currentTimerStartTime = Date.now();
+
             const intervalMs = 50;
             guessTimer = setInterval(() => {
-                timeLeft -= (intervalMs / 1000);
+                // Tarayıcı arka planda sekmeyi uyutsa bile geçen süreyi gerçek zamandan hesaplar
+                let elapsed = (Date.now() - currentTimerStartTime) / 1000;
+                timeLeft = TOTAL_GUESS_TIME - elapsed;
 
                 if (timeLeft <= 0) {
                     timeLeft = 0;
@@ -1533,7 +1537,7 @@
 
             const songNameOnly = playlist[currentSongIndex].title.toUpperCase();
             const eligibleIndices = [];
-            const letterRegex = /[A-Z0-9ÇĞİÖŞÜ]/i;
+            const letterRegex = /[A-Z0-9ÇĞİÖŞÜÂÎÛ]/i;
 
             for (let i = 0; i < songNameOnly.length; i++) {
                 if (songNameOnly[i] !== ' ' && !revealedLetters.includes(i) && letterRegex.test(songNameOnly[i])) {
@@ -1736,7 +1740,6 @@
             } else {
                 playSuccessSound();
                 
-                // 1. ADIM: EKRANI ANINDA (0 GECİKME İLE) GÜNCELLE
                 headerTitleHtml = `<h2 style="font-size: 32px; color: #f3c969; margin-bottom: 5px; text-shadow: 0 0 10px rgba(243,201,105,0.8);">GAME OVER!</h2>`;
                 
                 contentHtml = `
@@ -1765,7 +1768,6 @@
                     <button class="p-btn btn-start" style="width: 100%; font-size: 24px; padding: 12px;" onclick="location.reload()">▶ PLAY AGAIN</button>
                 `;
 
-                // 2. ADIM: ARKA PLANDA VERİTABANI İŞLEMLERİNİ YAP (Arayüzü dondurmaz)
                 try {
                     await fetch('/api/save-score', {
                         method: 'POST',
