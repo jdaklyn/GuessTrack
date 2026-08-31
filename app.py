@@ -49,7 +49,7 @@ TR_HITS = [
 ]
 
 EN_HITS = [
-    "Nirvana","Jeff Buckley", "Bon Jovi", "Michael Jackson", "Modern Talking" , "Radiohead" 
+    "Nirvana","Jeff Buckley", "Bon Jovi", "Michael Jackson", "Modern Talking", "Radiohead" 
 
 ]
 
