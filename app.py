@@ -44,12 +44,12 @@ def init_db():
 init_db()
 
 TR_HITS = [
-    "Duman", "Mor ve Otesi", "Vega", 
+    "Duman", "Mor ve Otesi", "Vega", "Birsen Tezer"
     
 ]
 
 EN_HITS = [
-    "Nirvana","Jeff Buckley", "Bon Jovi", "Michael Jackson", "Modern Talking", "Radiohead" 
+    "Nirvana","Jeff Buckley", "Michael Jackson", "Modern Talking", "Radiohead", "Tamino"
 
 ]
 
