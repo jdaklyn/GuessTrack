@@ -900,13 +900,14 @@
             s = s.split('-')[0].split('feat')[0].split('ft.')[0].trim();
             return s.replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
                     .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                    .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
                     .replace(/[^a-z0-9]/g, '');
         }
 
         function renderMysteryMask() {
             if (!playlist[currentSongIndex]) return;
             const songNameOnly = playlist[currentSongIndex].title.toUpperCase();
-            const letterRegex = /[A-Z0-9ÇĞİÖŞÜ]/i;
+            const letterRegex = /[A-Z0-9ÇĞİÖŞÜÂÎÛ]/i;
 
             let htmlOutput = `<span style="display: inline-flex; flex-wrap: wrap; justify-content: center; row-gap: 8px; column-gap: 24px; width: 100%;">`;
             let currentWord = "";
@@ -1533,7 +1534,7 @@
 
             const songNameOnly = playlist[currentSongIndex].title.toUpperCase();
             const eligibleIndices = [];
-            const letterRegex = /[A-Z0-9ÇĞİÖŞÜ]/i;
+            const letterRegex = /[A-Z0-9ÇĞİÖŞÜÂÎÛ]/i;
 
             for (let i = 0; i < songNameOnly.length; i++) {
                 if (songNameOnly[i] !== ' ' && !revealedLetters.includes(i) && letterRegex.test(songNameOnly[i])) {

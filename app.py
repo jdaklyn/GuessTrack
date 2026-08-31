@@ -7,7 +7,6 @@ from flask import Flask, render_template, request, jsonify, Response
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from dotenv import load_dotenv 
 
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -15,7 +14,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
- 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
@@ -44,13 +42,17 @@ def init_db():
 init_db()
 
 TR_HITS = [
-    "Duman", "Mor ve Otesi", "Vega", "Birsen Tezer"
-    
+    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin","MFO",
+    "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat", "Dedublüman", 
+    "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", "Seksendört",
+    "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model", "Hayko Cepkin",
+    "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani"
 ]
 
 EN_HITS = [
-    "Nirvana","Jeff Buckley", "Michael Jackson", "Modern Talking", "Radiohead", "Tamino"
-
+    "Nirvana","Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "Metallica", "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", 
+    "Bon Jovi", "Marilyn Manson", "The Cranberries", "Tamino", "One Direction", "Lana Del Rey", "Katy Perry", "The Weeknd", "Arctic Monkeys", "Backstreet Boys", "Bruno Mars", 
+    "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Pitbull", "Daft Punk" 
 ]
 
 EXCLUDED_TR_TITLES = [
@@ -134,7 +136,6 @@ def save_score():
     
     conn = get_db_connection()
     cursor = conn.cursor()
-    # PostgreSQL'de soru işareti (?) yerine %s kullanılır
     cursor.execute("INSERT INTO leaderboard (player_name, score, lang_mode) VALUES (%s, %s, %s)", (player_name, score, lang_mode))
     conn.commit()
     cursor.close()
