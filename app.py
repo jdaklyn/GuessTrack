@@ -61,6 +61,10 @@ EXCLUDED_TR_TITLES = [
     "for real", "shake it up", "always", "feel your love"
 ]
 
+EXCLUDED_EN_TITLES = [
+    "remix", "live", "karaoke", "instrumental", "cover", "spanish version", "acoustic" , "girl like me"
+]
+
 def fetch_itunes_tracks(artist_list, limit=5):
     tracks = []
     shuffled_artists = random.sample(artist_list, len(artist_list))
@@ -76,14 +80,18 @@ def fetch_itunes_tracks(artist_list, limit=5):
             results = []
             for r in res.get('results', []):
                 if r.get('previewUrl') and r.get('trackName'):
-                    raw_name_test = r['trackName'].lower()
-                    if is_tr and any(ex in raw_name_test for ex in EXCLUDED_TR_TITLES):
+                   raw_name_test = r['trackName'].lower()
+       
+                if is_tr and any(ex in raw_name_test for ex in EXCLUDED_TR_TITLES):
+                        continue
+                 
+                if not is_tr and any(ex in raw_name_test for ex in EXCLUDED_EN_TITLES):
                         continue
                         
-                    art_clean = artist.lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
-                    res_art_clean = r.get('artistName', '').lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
+                art_clean = artist.lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
+                res_art_clean = r.get('artistName', '').lower().replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ı", "i")
                     
-                    if art_clean == res_art_clean:
+                if art_clean == res_art_clean:
                         results.append(r)
             
             if results:

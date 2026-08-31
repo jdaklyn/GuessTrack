@@ -610,8 +610,9 @@
         let timeLeft = 20.0;
         let timerStartedForThisTrack = false;
         
-        // SENKRONİZASYON İÇİN EKLENEN GLOBAL DEĞİŞKEN (Mutlak Zaman)
         let currentTimerStartTime = 0;
+        // HAYALET SAYAÇLARI ENGELLEMEK İÇİN GLOBAL DEĞİŞKEN
+        let countdownInterval = null;
 
         let audio = new Audio();
         audio.preload = "auto";
@@ -1241,13 +1242,20 @@
             startVisualCountdownMulti();
         });
 
+        // HAYALET SAYAÇLARI TEMİZLEYEN FONKSİYON
         function handleMultiRoundEnd() {
             isLocked = true;
             stopGuessTimer();
             stopAudioOnly();
             hasVotedPass = false;
-            // DÜZELTME: Host tarafındaki tehlikeli (gecikmeye açık) setTimeout kaldırıldı.
-            // Artık turun değişip değişmediğine doğrudan sunucu (app.py) 2 sn içinde karar verecek.
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            const overlay = document.getElementById("screenCountdown");
+            if (overlay) overlay.style.display = "none";
         }
 
         socket.on('pass_voted_update', (data) => {
@@ -1360,7 +1368,11 @@
             countNum.style.color = "#f3c969";
             playBeepSound();
 
-            const timer = setInterval(() => {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            countdownInterval = setInterval(() => {
                 count--;
                 if (count > 0) {
                     countNum.innerText = count;
@@ -1370,10 +1382,14 @@
                     countNum.style.color = "#588157";
                     playGoSound();
                 } else {
-                    clearInterval(timer);
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
                     overlay.style.display = "none";
-                    updateUI();
-                    startNewTrackSession();
+                    
+                    if (!isLocked) {
+                        updateUI();
+                        startNewTrackSession();
+                    }
                 }
             }, 800);
         }
@@ -1429,10 +1445,10 @@
             }
 
             audio.currentTime = 0;
+            start20SecTimer();
             playAudioUntil(addedDurations[0]);
         }
 
-        // DÜZELTME: Mutlak (Absolute) Zamana Dayalı Süre Sayımı
         function start20SecTimer() {
             if (timerStartedForThisTrack) return;
             timerStartedForThisTrack = true;
@@ -1445,7 +1461,6 @@
 
             const intervalMs = 50;
             guessTimer = setInterval(() => {
-                // Tarayıcı arka planda sekmeyi uyutsa bile geçen süreyi gerçek zamandan hesaplar
                 let elapsed = (Date.now() - currentTimerStartTime) / 1000;
                 timeLeft = TOTAL_GUESS_TIME - elapsed;
 
@@ -1476,12 +1491,8 @@
 
             const visualizer = document.getElementById("visualizer");
 
-            audio.onplaying = () => {
-                if (visualizer) visualizer.classList.add("playing");
-                start20SecTimer();
-            };
-
             audio.play().then(() => {
+                if (visualizer) visualizer.classList.add("playing");
                 audioPlayInterval = setInterval(() => {
                     if (audio.currentTime >= targetEndTime || audio.ended) {
                         stopAudioOnly();
@@ -1495,7 +1506,6 @@
 
             }).catch(e => {
                 stopAudioOnly();
-                start20SecTimer();
             });
         }
 
