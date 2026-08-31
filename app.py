@@ -44,7 +44,7 @@ init_db()
 
 TR_HITS = [
     "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin", "MFO", "Onur Ozdemir"
-    "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Dedublüman","Can Bonomo", "emre aydin" ,      
+    "Sakin", "Vega", "Kurban", "Athena", "Dedublüman","Can Bonomo", "emre aydin" ,      
     "Model", "Hayko Cepkin", "Tarkan", "Sertab Erener", "Kenan Dogulu", "Ozlem Tekin" ,
     "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani" "Baris Manco", "Cem Karaca", "Cilekes", "Redd",  
 ]
