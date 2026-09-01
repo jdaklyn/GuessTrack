@@ -53,11 +53,11 @@ TR_HITS = [
 EN_HITS = [
     "Nirvana", "Jeff Buckley", "Red Hot Chili Peppers", "Queen", "David Guetta", "Lady Gaga", "Metallica", "Michael Jackson",
     "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", "Bon Jovi", "Marilyn Manson", "Britney Spears", "Pink Floyd",
-    "One Direction", "Lana Del Rey", "Arctic Monkeys", "Bruno Mars", "Rihanna", "Flo Rida",  
-    "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Daft Punk", "Scorpions" 
+    "One Direction", "Arctic Monkeys", "Bruno Mars", "Rihanna", "Flo Rida", "Daft Punk"
+    "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Scorpions" 
 ]
 
-# Çift parantez hatası düzeltildi ve Barış Manço İngilizce şarkıları eklendi
+
 EXCLUDED_TR_TITLES = [
     "love me back", "we could be the same", "everyway that i can", 
     "for real", "shake it up", "always", "feel your love",
