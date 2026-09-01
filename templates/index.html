@@ -897,7 +897,7 @@
             if (!text) return "";
             let s = text.toString().trim().toLowerCase();
             s = s.replace(/[\(\[\{].*?[\)\]\}]/g, '');
-            s = s.split('-')[0].split('feat')[0].split('ft.')[0].trim();
+            s = s.split(' - ')[0].split('feat')[0].split('ft.')[0].trim();
             return s.replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
                     .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
                     .replace(/[^a-z0-9]/g, '');
