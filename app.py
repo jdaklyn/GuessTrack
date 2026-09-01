@@ -53,10 +53,9 @@ TR_HITS = [
 EN_HITS = [
     "Nirvana", "Jeff Buckley", "Red Hot Chili Peppers", "Queen", "David Guetta", "Lady Gaga", "Metallica", "Michael Jackson",
     "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", "Bon Jovi", "Marilyn Manson", "Britney Spears", "Pink Floyd",
-    "One Direction", "Arctic Monkeys", "Bruno Mars", "Rihanna", "Flo Rida", "Daft Punk"
+    "One Direction", "Arctic Monkeys", "Bruno Mars", "Rihanna", "Flo Rida", "Daft Punk",
     "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Scorpions" 
 ]
-
 
 EXCLUDED_TR_TITLES = [
     "love me back", "we could be the same", "everyway that i can", 
@@ -99,7 +98,6 @@ def fetch_itunes_tracks(artist_list, limit=5):
             if results:
                 song = random.choice(results)
                 raw_name = song['trackName']
-                # TİRE HATASI DÜZELTİLDİ: Artık sağında ve solunda boşluk olan tireyi kesiyor (Sultan-ı Yegah kurtuldu)
                 clean_title = raw_name.split('(')[0].split(' - ')[0].split('[')[0].strip()
                 tracks.append({
                     "artist": song['artistName'],
@@ -131,13 +129,17 @@ def get_tracks():
 @app.route('/api/proxy-audio')
 def proxy_audio():
     audio_url = request.args.get('url')
-    if not audio_url:
-        return "URL required", 400
+    
+    # SSRF GÜVENLİK YAMASI: Sadece Apple/iTunes sunucularına giden isteklere izin ver
+    if not audio_url or not audio_url.startswith("https://audio-ssl.itunes.apple.com/"):
+        return "Forbidden: Invalid audio source", 403
+        
     try:
         req = requests.get(audio_url, stream=True, timeout=10)
         return Response(req.iter_content(chunk_size=1024), content_type=req.headers.get('content-type', 'audio/mp4'))
     except Exception as e:
-        return str(e), 500
+        print(f"Audio Proxy Error: {e}") # Loglama iyileştirildi
+        return "Audio fetch error", 500
 
 @app.route('/api/save-score', methods=['POST'])
 def save_score():
@@ -169,7 +171,6 @@ ROOMS = {}
 def generate_room_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
-# MÜKEMMEL ÇÖZÜM: İstemcilerden gelen geçiş komutunu işleyen yeni görev
 @socketio.on('client_trigger_next')
 def on_client_trigger_next(data):
     room_code = data.get('room_code')
@@ -177,7 +178,6 @@ def on_client_trigger_next(data):
     
     if room_code in ROOMS:
         room = ROOMS[room_code]
-        # Sadece beklenen turla gelen İLK komutu kabul et, çift geçişi engelle
         if room.get('current_idx') == expected_idx:
             room['current_idx'] += 1
             room['round_locked'] = False

@@ -583,6 +583,17 @@
     <script>
         const socket = io();
 
+        // XSS KORUMASI: HTML içine basılacak isimleri zararlı kodlardan arındırır
+        function escapeHTML(str) {
+            if (!str) return "";
+            return str.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         let playlist = [];
         const addedDurations = [1.5, 4.0, 8.0];
         const stagePoints = [15, 10, 5]; 
@@ -1269,7 +1280,6 @@
             }
             revealTitle();
             
-            // ÇÖZÜM: İki cihaz da süreyi sayıp sunucuya bildiriyor
             setTimeout(() => {
                 socket.emit('client_trigger_next', { room_code: currentRoomCode, expected_idx: currentSongIndex });
             }, 2000);
@@ -1305,7 +1315,6 @@
             revealTitle();
             updateUI();
             
-            // ÇÖZÜM: İki cihaz da süreyi sayıp sunucuya bildiriyor
             setTimeout(() => {
                 socket.emit('client_trigger_next', { room_code: currentRoomCode, expected_idx: currentSongIndex });
             }, 2000);
@@ -1323,7 +1332,6 @@
             revealTitle();
             updateUI();
             
-            // ÇÖZÜM: İki cihaz da süreyi sayıp sunucuya bildiriyor
             setTimeout(() => {
                 socket.emit('client_trigger_next', { room_code: currentRoomCode, expected_idx: currentSongIndex });
             }, 2000);
@@ -1713,7 +1721,8 @@
                     headerTitleHtml = `<h2 style="font-size: 24px; color: #f3c969; margin-bottom: 2px; text-shadow: 0 0 8px rgba(243,201,105,0.6);">🤝 IT'S A DRAW!</h2>`;
                 } else if (amIWinner) {
                     playSuccessSound();
-                    headerTitleHtml = `<h2 style="font-size: 24px; color: #588157; margin-bottom: 2px; text-shadow: 0 0 10px rgba(88,129,87,0.8);">🏆 WINNER: ${playerTag}</h2>`;
+                    // XSS KORUMASI EKLENDİ
+                    headerTitleHtml = `<h2 style="font-size: 24px; color: #588157; margin-bottom: 2px; text-shadow: 0 0 10px rgba(88,129,87,0.8);">🏆 WINNER: ${escapeHTML(playerTag)}</h2>`;
                 } else {
                     playWrongSound();
                     headerTitleHtml = `<h2 style="font-size: 24px; color: #a44a3f; margin-bottom: 2px; text-shadow: 0 0 10px rgba(164,74,63,0.8);">💀 DEFEAT!</h2>`;
@@ -1721,9 +1730,10 @@
 
                 const rowsHtml = sortedPlayers.map((p, idx) => {
                     const isTop = (idx === 0 && !isDraw);
+                    // XSS KORUMASI EKLENDİ
                     return `
                         <div class="leaderboard-row ${isTop ? 'winner-row' : ''}">
-                            <span>#${idx + 1} ${p.name} ${isTop ? '🏆' : ''}</span>
+                            <span>#${idx + 1} ${escapeHTML(p.name)} ${isTop ? '🏆' : ''}</span>
                             <span style="color: #f3c969;">${p.score} PTS</span>
                         </div>
                     `;
@@ -1745,7 +1755,6 @@
             } else {
                 playSuccessSound();
                 
-                // 1. ADIM: EKRANI ANINDA (0 GECİKME İLE) GÜNCELLE
                 headerTitleHtml = `<h2 style="font-size: 32px; color: #f3c969; margin-bottom: 5px; text-shadow: 0 0 10px rgba(243,201,105,0.8);">GAME OVER!</h2>`;
                 
                 contentHtml = `
@@ -1774,7 +1783,6 @@
                     <button class="p-btn btn-start" style="width: 100%; font-size: 24px; padding: 12px;" onclick="location.reload()">▶ PLAY AGAIN</button>
                 `;
 
-                // 2. ADIM: ARKA PLANDA VERİTABANI İŞLEMLERİNİ YAP (Arayüzü dondurmaz)
                 try {
                     await fetch('/api/save-score', {
                         method: 'POST',
@@ -1788,7 +1796,7 @@
                     const topScores = await response.json();
                     const rowsHtml = topScores.map((item, i) => `
                         <div class="leaderboard-row ${i === 0 ? 'winner-row' : ''}" style="padding: 4px 8px; font-size: 16px;">
-                            <span>#${i + 1} ${item.player_name} ${i === 0 ? '🏆' : ''}</span>
+                            <span>#${i + 1} ${escapeHTML(item.player_name)} ${i === 0 ? '🏆' : ''}</span>
                             <span style="color: #f3c969;">${item.score} PTS</span>
                         </div>
                     `).join('');
@@ -1797,7 +1805,8 @@
                     if (lbList) lbList.innerHTML = rowsHtml;
                 } catch (e) {
                     const lbList = document.getElementById("lbListContent");
-                    if (lbList) lbList.innerHTML = `<div class="leaderboard-row winner-row"><span>#1 ${playerTag} 🏆</span><span style="color: #f3c969;">${score} PTS</span></div>`;
+                    // XSS KORUMASI EKLENDİ
+                    if (lbList) lbList.innerHTML = `<div class="leaderboard-row winner-row"><span>#1 ${escapeHTML(playerTag)} 🏆</span><span style="color: #f3c969;">${score} PTS</span></div>`;
                 }
             }
         }
