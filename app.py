@@ -42,19 +42,19 @@ def init_db():
 
 init_db()
 
-# Eksik virgülleri tamamlanmış güncel listen
+
 TR_HITS = [
-    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin", "MFO",
-    "Sakin", "Vega", "Kurban", "Adamlar", "Athena", "Yuksek Sadakat", "Dedublüman", 
-    "Can Bonomo", "Baris Manco", "Cem Karaca", "Erkin Koray", "Cilekes", "Seksendört",
-    "Redd", "Ozlem Tekin", "Onur Ozdemir", "Birsen Tezer", "Model", "Hayko Cepkin",
-    "Tarkan", "Sertab Erener", "Kenan Dogulu", "Levent Yuksel", "Nazan Öncel", "Göksel", "Pinhani"
+    "Duman", "Mor ve Otesi", "maNga", "Sebnem Ferah", "Teoman", "Ayna", "Yalin", "MFO", "Onur Ozdemir",
+    "Sakin", "Vega", "Athena", "Dedublüman","Can Bonomo", "emre aydin",      
+    "Model", "Hayko Cepkin", "Tarkan", "Sertab Erener", "Kenan Dogulu", "Ozlem Tekin",
+    "Levent Yuksel","Nazan Öncel", "Göksel", "Pinhani", "Baris Manco", "Cem Karaca", "Cilekes", "Redd" 
 ]
 
 EN_HITS = [
-    "Nirvana", "Jeff Buckley", "Red Hot Chili Peppers", "Queen", "Selena Gomez", "David Guetta", "Lady Gaga", "Metallica", "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", 
-    "Bon Jovi", "Marilyn Manson", "The Cranberries", "Tamino", "One Direction", "Lana Del Rey", "Katy Perry", "The Weeknd", "Arctic Monkeys", "Backstreet Boys", "Bruno Mars", 
-    "Britney Spears", "Michael Jackson", "Rihanna", "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Pitbull", "Daft Punk" 
+    "Nirvana", "Jeff Buckley", "Red Hot Chili Peppers", "Queen", "David Guetta", "Lady Gaga", "Metallica", "Michael Jackson",
+    "Eminem", "Kanye West", "Timbaland", "Black Eyed Peas", "Bon Jovi", "Marilyn Manson", "Britney Spears", "Pink Floyd",
+    "One Direction", "Lana Del Rey", "Arctic Monkeys", "Bruno Mars", "Rihanna", "Flo Rida",  
+    "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Daft Punk", "Scorpions" 
 ]
 
 EXCLUDED_TR_TITLES = [
@@ -62,7 +62,7 @@ EXCLUDED_TR_TITLES = [
     "for real", "shake it up", "always", "feel your love"
 ]
 
-# "girl like me" eklenmiş güncel listen
+
 EXCLUDED_EN_TITLES = [
     "remix", "live", "karaoke", "instrumental", "cover", "spanish version", "acoustic", "girl like me"
 ]
