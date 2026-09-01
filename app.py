@@ -57,11 +57,12 @@ EN_HITS = [
     "Madonna", "Modern Talking", "Twenty One Pilots", "Radiohead", "Sting", "Daft Punk", "Scorpions" 
 ]
 
+# Çift parantez hatası düzeltildi ve Barış Manço İngilizce şarkıları eklendi
 EXCLUDED_TR_TITLES = [
     "love me back", "we could be the same", "everyway that i can", 
-    "for real", "shake it up", "always", "feel your love"
+    "for real", "shake it up", "always", "feel your love",
+    "nick the chopper", "runaway", "little darling", "lady of the seventh sky"
 ]
-
 
 EXCLUDED_EN_TITLES = [
     "remix", "live", "karaoke", "instrumental", "cover", "spanish version", "acoustic", "girl like me"
@@ -98,7 +99,8 @@ def fetch_itunes_tracks(artist_list, limit=5):
             if results:
                 song = random.choice(results)
                 raw_name = song['trackName']
-                clean_title = raw_name.split('(')[0].split('-')[0].split('[')[0].strip()
+                # TİRE HATASI DÜZELTİLDİ: Artık sağında ve solunda boşluk olan tireyi kesiyor (Sultan-ı Yegah kurtuldu)
+                clean_title = raw_name.split('(')[0].split(' - ')[0].split('[')[0].strip()
                 tracks.append({
                     "artist": song['artistName'],
                     "title": clean_title,
